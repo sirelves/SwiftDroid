@@ -81,7 +81,7 @@ Developer writes this once:
 | **0 — Foundation** | SPM skeleton, research docs, public README | Weeks 1–3 | Complete |
 | **1 — Reactivity** | @State, @Binding, @ObservedObject, DependencyGraph | Weeks 4–10 | Complete |
 | **2 — View Protocol** | View, ViewBuilder, TupleView, NodeElement tree | Weeks 11–18 | Complete |
-| **3 — Layout Engine** | Propose/respond model, VStack/HStack/ZStack/Text | Weeks 19–32 | Not started |
+| **3 — Layout Engine** | Propose/respond model, VStack/HStack/ZStack/Text | Weeks 19–32 | Complete |
 | **4 — Android Renderer** | swift-java bridge, Compose mapping, CounterApp demo | Weeks 33–44 | Not started |
 | **5 — iOS Adapter** | SwiftUI typealias layer, parity test suite | Weeks 45–52 | Not started |
 

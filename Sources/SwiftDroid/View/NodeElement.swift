@@ -19,6 +19,18 @@ public struct NodeElement: Equatable {
         /// A transparent grouping of children (TupleView, Group).
         /// Carries no layout semantics of its own — the layout engine flattens it.
         case group
+        /// A flexible gap that expands along its container's main axis.
+        /// `minLength` is the smallest size it will ever report.
+        case spacer(minLength: Double)
+        /// Vertical stack. `spacing` separates adjacent children; `alignment`
+        /// positions them horizontally within the stack's width.
+        case vstack(spacing: Double, alignment: HorizontalAlignment)
+        /// Horizontal stack. `spacing` separates adjacent children; `alignment`
+        /// positions them vertically within the stack's height.
+        case hstack(spacing: Double, alignment: VerticalAlignment)
+        /// Depth stack — children overlap, positioned by `alignment` within the
+        /// stack's bounding box.
+        case zstack(alignment: Alignment)
     }
 
     public let kind: Kind
