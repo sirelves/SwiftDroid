@@ -33,5 +33,11 @@ let package = Package(
             name: "SwiftDroidTests",
             dependencies: ["SwiftDroid"]
         ),
+        // Headless CounterApp demo — `swift run CounterAppDemo`
+        .executableTarget(
+            name: "CounterAppDemo",
+            dependencies: ["SwiftDroid"],
+            path: "Examples/CounterApp"
+        ),
     ]
 )
