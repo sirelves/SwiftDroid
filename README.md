@@ -82,7 +82,7 @@ Developer writes this once:
 | **1 — Reactivity** | @State, @Binding, @ObservedObject, DependencyGraph | Weeks 4–10 | Complete |
 | **2 — View Protocol** | View, ViewBuilder, TupleView, NodeElement tree | Weeks 11–18 | Complete |
 | **3 — Layout Engine** | Propose/respond model, VStack/HStack/ZStack/Text | Weeks 19–32 | Complete |
-| **4 — Android Renderer** | swift-java bridge, Compose mapping, CounterApp demo | Weeks 33–44 | In progress — Button, render layer (`DrawCommand`/`CommandRenderer`), reactive `ViewHost` and a headless CounterApp demo are done (`swift run CounterAppDemo`); the swift-java → Compose binding is pending the Swift Android SDK |
+| **4 — Android Renderer** | swift-java bridge, Compose mapping, CounterApp demo | Weeks 33–44 | In progress — **done & tested:** Button, render layer (`DrawCommand`/`CommandRenderer`), reactive `ViewHost`, the `NodeElement`→Compose mapping (`ComposeRenderer`), and a headless CounterApp demo (`swift run CounterAppDemo`). **Toolchain:** open-source Swift 6.2.3 + Android SDK 6.2.3 + NDK r27c sysroot installed; native cross-compile currently blocked on an NDK r27 ↔ Swift-overlay clang-module issue (`_sys_types`). **Remaining:** the swift-java → Compose `emit()` + a Gradle/JNI host to run on a device (see `docs/internals/android-renderer.md`) |
 | **5 — iOS Adapter** | SwiftUI typealias layer, parity test suite | Weeks 45–52 | Not started |
 
 ---
