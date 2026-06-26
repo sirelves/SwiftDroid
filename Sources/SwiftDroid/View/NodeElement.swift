@@ -6,9 +6,9 @@
 /// `Equatable`. The Android renderer (Phase 4) walks this tree to emit Compose
 /// nodes; the layout engine (Phase 3) annotates it with sizes.
 ///
-/// `NodeElement` is deliberately small in Phase 2: it carries only the node kinds
-/// the View protocol machinery can produce. Container kinds (VStack/HStack/ZStack)
-/// and interactive kinds (Button) arrive with their phases.
+/// `NodeElement` carries the node kinds the View machinery can produce. Container
+/// kinds (VStack/HStack/ZStack) arrived in Phase 3; the interactive `button` kind
+/// arrives in Phase 4 with its tap `action`.
 public struct NodeElement: Equatable {
     /// The concrete kind of a single node in the rendered tree.
     public enum Kind: Equatable {
@@ -31,13 +31,28 @@ public struct NodeElement: Equatable {
         /// Depth stack — children overlap, positioned by `alignment` within the
         /// stack's bounding box.
         case zstack(alignment: Alignment)
+        /// A tappable control. Its label is the (single) child; the tap handler
+        /// lives in `NodeElement.action`.
+        case button
     }
 
     public let kind: Kind
     public let children: [NodeElement]
 
-    public init(kind: Kind, children: [NodeElement] = []) {
+    /// Tap handler for interactive nodes (`.button`); `nil` otherwise. Closures
+    /// are not `Equatable`, so equality is structural — see `==` below.
+    public let action: (() -> Void)?
+
+    public init(kind: Kind, children: [NodeElement] = [], action: (() -> Void)? = nil) {
         self.kind = kind
         self.children = children
+        self.action = action
+    }
+
+    /// Structural equality: compares `kind` and `children` only. `action` is
+    /// intentionally excluded — function values have no meaningful equality, and
+    /// snapshot tests care about the tree shape, not handler identity.
+    public static func == (lhs: NodeElement, rhs: NodeElement) -> Bool {
+        lhs.kind == rhs.kind && lhs.children == rhs.children
     }
 }

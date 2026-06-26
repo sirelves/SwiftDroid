@@ -58,6 +58,13 @@ public struct LayoutEngine {
 
         case .zstack(let alignment):
             return layoutZStack(node, alignment: alignment, proposal: proposal)
+
+        case .button:
+            // A button sizes to its label (its single child), placed at origin.
+            // Padding/min hit-target sizing is a later refinement.
+            let labelNode = node.children.first ?? NodeElement(kind: .empty)
+            let label = layout(labelNode, proposal: proposal)
+            return LayoutResult(kind: node.kind, size: label.size, children: [label])
         }
     }
 
