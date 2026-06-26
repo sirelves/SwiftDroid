@@ -39,4 +39,13 @@ final class ButtonTests: XCTestCase {
         XCTAssertEqual(r.size, Size(width: 20, height: 20))
         XCTAssertEqual(r.children.map(\.kind), [.text("ab")])
     }
+
+    func testLayoutPreservesButtonAction() {
+        var taps = 0
+        let engine = LayoutEngine.monospace()
+        let r = engine.layout(makeNode(Button("go") { taps += 1 }), proposal: .unspecified)
+        XCTAssertNotNil(r.action)
+        r.action?()
+        XCTAssertEqual(taps, 1)
+    }
 }
