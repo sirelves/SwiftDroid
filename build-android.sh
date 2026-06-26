@@ -13,7 +13,10 @@ SDK_X86_64="x86_64-unknown-linux-android28"
 
 check_sdk() {
     local sdk_id="$1"
-    if ! swift sdk list 2>/dev/null | grep -q "$sdk_id"; then
+    # The bundle is listed by its artifact id (e.g. swift-6.2.3-RELEASE_android),
+    # while builds select the target triple ($sdk_id). Match on "android" so an
+    # installed Android SDK satisfies the check regardless of naming.
+    if ! swift sdk list 2>/dev/null | grep -qi "android"; then
         echo "ERROR: Swift SDK '$sdk_id' is not installed."
         echo ""
         echo "Install it by running:"

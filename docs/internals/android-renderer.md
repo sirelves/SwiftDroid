@@ -53,35 +53,47 @@ Also requires **Android NDK r27c** for linking.
 
 ## Cross-compile the core
 
+The skiptools 6.2.3 bundle ships with dangling symlinks (the NDK sysroot and the
+clang runtime point at the skiptools CI host). Wire them to your NDK once:
+
 ```bash
-./build-android.sh arm64         # aarch64-unknown-linux-android28, physical devices
-./build-android.sh x86_64        # emulator
+./scripts/setup-android-sdk.sh /path/to/android-ndk-r27c
+```
+
+Then build:
+
+```bash
+source ~/.swiftly/env.sh          # use the open-source toolchain
+./build-android.sh arm64          # aarch64-unknown-linux-android28
+./build-android.sh x86_64         # emulator
 ```
 
 ### Verified status (2026-06-25)
 
-With the toolchain + SDK + NDK r27c sysroot above, **every SwiftDroid source
-(core + Compose mapping + the `SwiftDroidAndroid` adapter) compiles for
-`aarch64-unknown-linux-android28`** — no JVM, no transpilation. Two gotchas were
-needed and are now handled by `build-android.sh`:
+**The full stack — core + Compose mapping + `SwiftDroidAndroid` adapter + the
+CounterApp demo — compiles AND links to a native Android ARM64 binary, no JVM and
+no transpilation:**
 
-- **`'stddef.h' file not found`** — the open-source toolchain's clang builtin
-  headers must be added with `-Xcc -isystem -Xcc <toolchain>/usr/lib/clang/*/include`.
-  (`build-android.sh` derives and passes this automatically.)
-- **`ndk-sysroot`** must point at the NDK r27c sysroot (`sdkRootPath` in the
-  bundle); the bundle ships without it.
+```
+$ file .build/aarch64-unknown-linux-android28/release/CounterAppDemo
+ELF 64-bit LSB pie executable, ARM aarch64, interpreter /system/bin/linker64
+```
 
-The final **link** of an executable still needs the NDK runtime libraries placed
-where the SDK expects them — `libclang_rt.builtins.a`, `libunwind.a`, and the Swift
-runtime objects (`swiftrt.o`, `libswiftCore.so`, …). The skiptools `skip android
-sdk install` provisions these into the bundle automatically; doing it by hand means
-copying the NDK's `lib/clang/*/lib/linux` builtins and symlinking the bundle's
-`swift-resources/usr/lib/swift-<arch>` runtime under the sysroot. This is the one
-remaining step to produce a runnable native binary.
+What it took (all captured in `scripts/setup-android-sdk.sh` + `build-android.sh`):
+
+- **`'stddef.h' file not found`** → `build-android.sh` adds the toolchain's clang
+  builtin headers (`-Xcc -isystem -Xcc <toolchain>/usr/lib/clang/*/include`).
+- **`ndk-sysroot`** → symlinked to the NDK r27c sysroot (the bundle's `sdkRootPath`).
+- **`libclang_rt.builtins.a` / `libunwind.a`** → the bundle's `usr/lib/swift/clang`
+  symlink repointed to the NDK's `lib/clang/<ver>`, with per-triple names exposed.
+- **`swiftrt.o` / `libswiftCore.so`** → Swift runtime symlinked under the sysroot
+  (`usr/lib/swift/android` and `usr/lib/swift_static/android`) for dynamic + static.
+
+(skiptools' own `skip android sdk install` automates the same provisioning.)
 
 ## Remaining work to run on a device
 
-Once linked, the `.so` is consumed by an Android app:
+The native binary still needs an emulator/device to run, and the Compose UI needs:
 
 1. **swift-java Compose bindings** — generate Swift bindings for the AndroidX
    Compose APIs so `AndroidRenderer.emit(_:)` can call `Column`/`Text`/`Button`/…
