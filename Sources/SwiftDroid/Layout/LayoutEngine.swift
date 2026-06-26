@@ -135,7 +135,7 @@ public struct LayoutEngine {
         for r in results {
             let crossPos = crossOffset(child: crossOf(r.size, axis), within: stackCross, align: align)
             let origin = makePoint(main: cursor, cross: crossPos, axis: axis)
-            placed.append(LayoutResult(kind: r.kind, size: r.size, origin: origin, children: r.children))
+            placed.append(LayoutResult(kind: r.kind, size: r.size, origin: origin, children: r.children, action: r.action))
             cursor += mainOf(r.size, axis) + spacing
         }
 
@@ -160,7 +160,7 @@ public struct LayoutEngine {
         let placed = measured.map { r -> LayoutResult in
             let x = offset(child: r.size.width, within: width, align: alignment.horizontal)
             let y = offset(child: r.size.height, within: height, align: alignment.vertical)
-            return LayoutResult(kind: r.kind, size: r.size, origin: Point(x: x, y: y), children: r.children)
+            return LayoutResult(kind: r.kind, size: r.size, origin: Point(x: x, y: y), children: r.children, action: r.action)
         }
 
         return LayoutResult(kind: node.kind, size: Size(width: width, height: height), children: placed)

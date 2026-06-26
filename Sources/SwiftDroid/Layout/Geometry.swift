@@ -60,3 +60,26 @@ public struct ProposedSize: Equatable {
     /// Both dimensions infinite — fill all available space.
     public static let infinity = ProposedSize(width: .infinity, height: .infinity)
 }
+
+/// An absolute frame: an `origin` paired with a `size`. Produced by the renderer
+/// when it accumulates parent-relative layout origins into absolute positions.
+public struct Rect: Equatable {
+    public var origin: Point
+    public var size: Size
+
+    public init(origin: Point, size: Size) {
+        self.origin = origin
+        self.size = size
+    }
+
+    public var x: Double { origin.x }
+    public var y: Double { origin.y }
+    public var width: Double { size.width }
+    public var height: Double { size.height }
+
+    /// Whether `point` falls inside this frame (used for hit-testing taps).
+    public func contains(_ point: Point) -> Bool {
+        point.x >= origin.x && point.x <= origin.x + size.width &&
+        point.y >= origin.y && point.y <= origin.y + size.height
+    }
+}
