@@ -58,12 +58,30 @@ Also requires **Android NDK r27c** for linking.
 ./build-android.sh x86_64        # emulator
 ```
 
-This builds the platform-agnostic `SwiftDroid` core (and `SwiftDroidAndroid`) as a
-native `.so` for Android — no JVM, no transpilation.
+### Verified status (2026-06-25)
+
+With the toolchain + SDK + NDK r27c sysroot above, **every SwiftDroid source
+(core + Compose mapping + the `SwiftDroidAndroid` adapter) compiles for
+`aarch64-unknown-linux-android28`** — no JVM, no transpilation. Two gotchas were
+needed and are now handled by `build-android.sh`:
+
+- **`'stddef.h' file not found`** — the open-source toolchain's clang builtin
+  headers must be added with `-Xcc -isystem -Xcc <toolchain>/usr/lib/clang/*/include`.
+  (`build-android.sh` derives and passes this automatically.)
+- **`ndk-sysroot`** must point at the NDK r27c sysroot (`sdkRootPath` in the
+  bundle); the bundle ships without it.
+
+The final **link** of an executable still needs the NDK runtime libraries placed
+where the SDK expects them — `libclang_rt.builtins.a`, `libunwind.a`, and the Swift
+runtime objects (`swiftrt.o`, `libswiftCore.so`, …). The skiptools `skip android
+sdk install` provisions these into the bundle automatically; doing it by hand means
+copying the NDK's `lib/clang/*/lib/linux` builtins and symlinking the bundle's
+`swift-resources/usr/lib/swift-<arch>` runtime under the sysroot. This is the one
+remaining step to produce a runnable native binary.
 
 ## Remaining work to run on a device
 
-The `.so` is consumed by an Android app:
+Once linked, the `.so` is consumed by an Android app:
 
 1. **swift-java Compose bindings** — generate Swift bindings for the AndroidX
    Compose APIs so `AndroidRenderer.emit(_:)` can call `Column`/`Text`/`Button`/…

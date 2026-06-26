@@ -31,9 +31,19 @@ build_for() {
     local sdk_id="$1"
     local label="$2"
     echo "==> Building SwiftDroid for $label ($sdk_id) ..."
+
+    # The open-source toolchain's clang builtin headers (stddef.h, …) must be on
+    # the include path when building the Android C modules — otherwise the SDK's
+    # bionic overlay fails with "'stddef.h' file not found". Derive them from the
+    # active toolchain.
+    local tc clang_inc=""
+    tc="$(ls -d "$HOME"/Library/Developer/Toolchains/swift-*RELEASE.xctoolchain 2>/dev/null | head -1)"
+    [ -n "$tc" ] && clang_inc="$(ls -d "$tc"/usr/lib/clang/*/include 2>/dev/null | head -1)"
+
     swift build \
         --swift-sdk "$sdk_id" \
         --static-swift-stdlib \
+        ${clang_inc:+-Xcc -isystem -Xcc "$clang_inc"} \
         -c release
     echo "==> Build succeeded for $label"
 }
