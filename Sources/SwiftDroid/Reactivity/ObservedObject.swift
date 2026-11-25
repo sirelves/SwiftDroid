@@ -13,10 +13,17 @@ public struct ObservedObject<ObjectType: ObservableObject> {
         self.wrappedValue = wrappedValue
     }
 
-    /// Provides `$object` projected-value access for deriving `Binding`s from
-    /// the object's properties.
+    /// `$model.property` → `Binding`.
+    @dynamicMemberLookup
     public struct Wrapper {
         let object: ObjectType
+
+        public subscript<Subject>(
+            dynamicMember keyPath: ReferenceWritableKeyPath<ObjectType, Subject>
+        ) -> Binding<Subject> {
+            Binding(get: { object[keyPath: keyPath] },
+                    set: { object[keyPath: keyPath] = $0 })
+        }
     }
 
     public var projectedValue: Wrapper {
