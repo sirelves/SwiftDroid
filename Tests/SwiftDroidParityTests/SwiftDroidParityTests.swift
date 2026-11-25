@@ -82,6 +82,20 @@ final class SwiftDroidParityTests: XCTestCase {
         XCTAssertEqual(r.size.height, 52 + 36 + 20 + 24 + 40 + 46 + 20)
     }
 
+    func testStylesResolve() {
+        let node = compose(ParityStyles())
+        let styles = Dictionary(uniqueKeysWithValues: node.children.compactMap { c -> (String, TextStyle)? in
+            let leaf = c.kind == .button ? c.children[0] : c
+            if case .text(let s) = leaf.kind { return (s, leaf.textStyle) } else { return nil }
+        })
+        XCTAssertEqual(styles["title"], TextStyle(font: .title, color: .primary))
+        XCTAssertEqual(styles["headline"], TextStyle(font: .headline, color: .secondary))
+        XCTAssertEqual(styles["g1"]?.resolvedFont, Font.callout.bold())
+        XCTAssertEqual(styles["g2"]?.resolvedFont, .callout)  // inner bold(false) undoes the outer bold (measured)
+        XCTAssertEqual(styles["styled"], TextStyle(font: .caption, color: .red))
+        XCTAssertEqual(styles.count, 10)
+    }
+
     func testGroupFlattensElevenChildren() {
         XCTAssertEqual(compose(ParityGroup()).children.count, 11)
     }

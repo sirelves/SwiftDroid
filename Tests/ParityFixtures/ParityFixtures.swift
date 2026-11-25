@@ -119,6 +119,28 @@ struct ParityModifiers: View {
     }
 }
 
+struct ParityStyles: View {
+    var body: some View {
+        VStack {
+            Text("title").font(.title)
+            Text("headline").font(.headline).foregroundColor(.secondary)
+            Text("custom").font(.system(size: 20, weight: .semibold))
+            Text("weights").fontWeight(.light)
+            Text("bold font").font(.body.bold())
+            Text("rgb").foregroundColor(Color(red: 0.2, green: 0.4, blue: 0.6, opacity: 0.8))
+            Text("faded").foregroundColor(.blue.opacity(0.5))
+            Group {
+                Text("g1")
+                Text("g2").bold(false)
+            }
+            .bold()
+            Button("styled") {}.font(.caption).foregroundColor(.red)
+        }
+        .font(.callout)
+        .foregroundColor(.primary)
+    }
+}
+
 struct ParityGroup: View {
     var body: some View {
         VStack {

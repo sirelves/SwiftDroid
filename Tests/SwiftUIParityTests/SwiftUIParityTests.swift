@@ -25,6 +25,7 @@ final class SwiftUIParityTests: XCTestCase {
         assertRenders(ParityModelView(model: ParityModel()))
         assertRenders(ParityGroup())
         assertRenders(ParityModifiers())
+        assertRenders(ParityStyles())
     }
 
     #if canImport(AppKit)
@@ -40,6 +41,19 @@ final class SwiftUIParityTests: XCTestCase {
         XCTAssertEqual(size(Text("a").frame(width: 100, height: 40, alignment: .topLeading)), CGSize(width: 100, height: 40))
         XCTAssertEqual(size(Text("a").frame(height: 30).padding(.top)), CGSize(width: t.width, height: 46))
         XCTAssertEqual(size(VStack(spacing: 0) { EmptyView().padding().frame(width: 50); Text("a") }), t)
+    }
+
+    // Same weight rules as StyleModifierTests, checked through text widths.
+    func testBoldAndFontWeightRules() {
+        func w<V: SwiftUI.View>(_ v: V) -> CGFloat { NSHostingController(rootView: v).view.fittingSize.width }
+        let t = "WWWWWWWWWW"
+        XCTAssertNotEqual(w(Text(t)), w(Text(t).bold()))
+        XCTAssertEqual(w(VStack { Text(t).bold(false) }.bold()), w(Text(t)))
+        XCTAssertEqual(w(VStack { Text(t).bold() }.fontWeight(.ultraLight)), w(Text(t).fontWeight(.ultraLight)))
+        XCTAssertEqual(w(VStack { Text(t).fontWeight(.ultraLight) }.bold()), w(Text(t).fontWeight(.ultraLight)))
+        XCTAssertEqual(w(VStack { Text(t).bold(false) }.fontWeight(.black)), w(Text(t).fontWeight(.black)))
+        XCTAssertEqual(w(Text(t).font(.title.weight(.ultraLight)).bold()), w(Text(t).font(.title.bold())))
+        XCTAssertEqual(w(Text(t).font(.headline).fontWeight(.regular)), w(Text(t)))
     }
     #endif
 

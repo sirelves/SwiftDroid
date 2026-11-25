@@ -24,6 +24,9 @@ public typealias VerticalAlignment = SwiftUI.VerticalAlignment
 public typealias EdgeInsets = SwiftUI.EdgeInsets
 public typealias Edge = SwiftUI.Edge
 
+public typealias Font = SwiftUI.Font
+public typealias Color = SwiftUI.Color
+
 public typealias State = SwiftUI.State
 public typealias Binding = SwiftUI.Binding
 public typealias ObservedObject = SwiftUI.ObservedObject
