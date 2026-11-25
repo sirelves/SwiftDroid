@@ -21,6 +21,8 @@ public typealias TupleView = SwiftUI.TupleView
 public typealias ForEach = SwiftUI.ForEach
 public typealias ScrollView = SwiftUI.ScrollView
 public typealias LazyVStack = SwiftUI.LazyVStack
+public typealias List = SwiftUI.List
+public typealias Section = SwiftUI.Section
 
 public typealias Alignment = SwiftUI.Alignment
 public typealias HorizontalAlignment = SwiftUI.HorizontalAlignment

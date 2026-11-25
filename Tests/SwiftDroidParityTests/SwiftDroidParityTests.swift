@@ -111,6 +111,12 @@ final class SwiftDroidParityTests: XCTestCase {
         XCTAssertTrue(texts(h.commands).contains("line 16"))
     }
 
+    func testSettingsListBuildsSectionsAndRows() {
+        let h = host(ParitySettings(list: ParityTodoList()))
+        let t = texts(h.commands)
+        XCTAssertTrue(["Profile", "Name", "Plan", "Pro", "Todos", "○ milk", "Tap to toggle"].allSatisfy(t.contains))
+    }
+
     func testGroupFlattensElevenChildren() {
         XCTAssertEqual(compose(ParityGroup()).children.count, 11)
     }

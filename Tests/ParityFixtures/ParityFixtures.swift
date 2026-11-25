@@ -201,6 +201,32 @@ struct ParityLazyFeed: View {
     }
 }
 
+struct ParitySettings: View {
+    @ObservedObject var list: ParityTodoList
+
+    var body: some View {
+        VStack {
+            List {
+                Section("Profile") {
+                    Text("Name")
+                    HStack { Text("Plan"); Spacer(); Text("Pro").foregroundColor(.secondary) }
+                }
+                Section {
+                    ForEach(list.todos) { ParityTodoRow(todo: $0) }
+                } header: {
+                    Text("Todos")
+                } footer: {
+                    Text("Tap to toggle")
+                }
+                Divider()
+            }
+            List(list.todos) { Text($0.title) }.listStyle(.plain)
+            List(0..<3) { Text("#\($0)") }   // .insetGrouped is iOS-only in SwiftUI
+            List(["a", "b"], id: \.self) { Text($0) }.listStyle(.automatic)
+        }
+    }
+}
+
 struct ParityGroup: View {
     var body: some View {
         VStack {
