@@ -89,12 +89,28 @@ re-render.
 `Range<Int>`. Row state follows the id across reorders/insertions. Rendering is
 linear (~15 µs per stateful row in release); there is no lazy container yet.
 
+## ScrollView
+
+`ScrollView(_ axes:showsIndicators:content:)`. Sizing is pinned by the measured
+`ScrollCases` table: content is proposed `nil` on the scrolling axes; the view
+takes the proposed length there (content's if unspecified) and the content's
+size on the other axes. The scroll offset is the view's own `@State`, so it
+survives re-renders and is dropped if the view leaves the hierarchy.
+
+`CommandRenderer` emits a `.scroll` command and walks the content clipped to
+the viewport: leaves outside are culled and clipped parts can't be tapped.
+`ViewHost.scroll(at:by:)` routes each axis of a delta to the innermost viewport
+that scrolls on it, passing the rest outward, in one render. On Android the
+Compose mapping uses `verticalScroll`/`horizontalScroll` with Compose's own state.
+
 ## Known semantic differences
 
 - Re-render is synchronous in the core (SwiftUI coalesces to the next frame).
   `@Published` writes run inside an `InvalidationQueue` transaction so the frame
   sees the new value; a manual `objectWillChange.send()` followed by a write to
   a plain property re-renders before the write.
+- No momentum, bouncing, scroll indicators or `ScrollViewReader`; layout of the
+  whole content still happens (only drawing is culled) — no lazy containers yet.
 - Identity ignores container types: changing `VStack { Row() }` to
   `HStack { Row() }` keeps `Row`'s state (SwiftUI resets it).
 - `ForEach($items) { $item in … }` (binding variant) is not supported; duplicate
