@@ -31,10 +31,27 @@ the Android build.
 leakage), so a modifier the core lacks (e.g. `.foregroundColor`) compiles via
 `SwiftDroidiOS`. The parity suite is the real guard.
 
-Modifiers in the core: `.padding` (all four overloads) and
-`.frame(width:height:alignment:)`. The SwiftUI parity test measures them with
-`NSHostingController` and asserts the same size deltas the core's layout engine
-produces.
+Modifiers in the core: `.padding` (all four overloads),
+`.frame(width:height:alignment:)` and the flexible
+`.frame(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:alignment:)`.
+
+## Layout parity tables
+
+Behavior that is easy to get subtly wrong is pinned by tables measured from
+SwiftUI and kept as plain data in `Tests/ParityFixtures`:
+
+| Table | What | SwiftUI side re-measures with |
+|---|---|---|
+| `FlexFrameCases` | 8 flexible frames × 8 proposals (incl. `nil`, `∞`), both axes | a probe `Layout` that proposes an exact size |
+| `StackCases` | 16 stack scenarios (flexible frames, spacers, overflow, spacing) in `HStack` and `VStack` | a recording `Layout` around each child |
+
+The core must produce the same numbers; the SwiftUI side re-checks the table
+live, so an OS change in SwiftUI's behavior shows up as a failing test.
+
+Stack distribution follows SwiftUI: children are visited from least to most
+flexible (size at ∞ minus size at 0, ties in source order) and each takes from
+an equal share of the space left. Because that measures every child three
+times, layout results are memoised per (tree path, proposal) within a pass.
 
 ## Parity suite
 
@@ -60,5 +77,9 @@ Gaps the suite surfaced and the core now covers: `Group`, synthesised
   a plain property re-renders before the write.
 - `Group { … }.padding()` pads each child in SwiftUI; the core pads the group
   as one block.
+- No `layoutPriority`; stacks' default `spacing` is a fixed 8 (SwiftUI adapts it
+  per pair of views). `Spacer()` minimum is 8 in both.
+- Compose has no "ideal size": `idealWidth`/`idealHeight` only affect the core's
+  layout engine, not the Compose mapping.
 - `spacing`/`minLength` are `Double` (non-optional) in the core vs `CGFloat?`
   in SwiftUI. Literals work on both; passing `nil` only works on SwiftUI.
