@@ -17,7 +17,7 @@ final class StyleModifierTests: XCTestCase {
 
     func testModifiersEmitTextStyleNodes() {
         XCTAssertEqual(makeNode(Text("a").font(.title)).kind, .textStyle(TextStyle(font: .title)))
-        XCTAssertEqual(makeNode(Text("a").bold()).kind, .textStyle(TextStyle(weight: .bold)))
+        XCTAssertEqual(makeNode(Text("a").bold()).kind, .textStyle(TextStyle(bold: true)))
         XCTAssertEqual(makeNode(Text("a").fontWeight(.light)).kind, .textStyle(TextStyle(weight: .light)))
         XCTAssertEqual(makeNode(Text("a").foregroundColor(.red)).kind, .textStyle(TextStyle(color: .red)))
     }
@@ -47,11 +47,27 @@ final class StyleModifierTests: XCTestCase {
         XCTAssertEqual(s["a"]?.resolvedFont, Font.title.bold())
     }
 
+    // The next three mirror SwiftUI measurements (bold and fontWeight are separate).
+    func testInnerBoldFalseUndoesOuterBold() {
+        XCTAssertEqual(styles(VStack { Text("a").bold(false) }.bold())["a"]?.resolvedFont, .body)
+    }
+
+    func testExplicitWeightBeatsBoldAtAnyNesting() {
+        XCTAssertEqual(styles(VStack { Text("a").bold() }.fontWeight(.ultraLight))["a"]?.resolvedFont, Font.body.weight(.ultraLight))
+        XCTAssertEqual(styles(VStack { Text("a").fontWeight(.ultraLight) }.bold())["a"]?.resolvedFont, Font.body.weight(.ultraLight))
+        XCTAssertEqual(styles(VStack { Text("a").bold(false) }.fontWeight(.black))["a"]?.resolvedFont, Font.body.weight(.black))
+    }
+
+    func testBoldBeatsFontsOwnWeightButBoldFalseKeepsIt() {
+        XCTAssertEqual(styles(Text("a").font(.title.weight(.ultraLight)).bold())["a"]?.resolvedFont, Font.title.bold())
+        XCTAssertEqual(styles(Text("a").font(.headline).bold(false))["a"]?.resolvedFont, .headline)
+    }
+
     func testStyledGroupStillFlattensIntoStack() {
         let node = makeNode(VStack(spacing: 0) { Group { Text("a"); Text("b") }.bold(); Text("c") })
         let compose = ComposeRenderer().render(node)
         XCTAssertEqual(compose.children.map(\.kind), [.text("a"), .text("b"), .text("c")])
-        XCTAssertEqual(compose.children.map(\.textStyle.weight), [.bold, .bold, nil])
+        XCTAssertEqual(compose.children.map(\.textStyle.bold), [true, true, nil])
         XCTAssertEqual(engine.layout(node, proposal: .unspecified).children.count, 3)
     }
 
@@ -70,7 +86,7 @@ final class StyleModifierTests: XCTestCase {
 
     func testStyleDoesNotLeakToSiblings() {
         let s = styles(HStack { Text("a").bold(); Text("b") })
-        XCTAssertEqual(s["a"]?.weight, .bold)
+        XCTAssertEqual(s["a"]?.bold, true)
         XCTAssertEqual(s["b"], TextStyle())
     }
 }

@@ -74,7 +74,7 @@ extension View {
     }
 
     public func bold(_ isActive: Bool = true) -> _TextStyleView<Self> {
-        fontWeight(isActive ? .bold : nil)
+        _TextStyleView(content: self, style: TextStyle(bold: isActive))
     }
 
     public func foregroundColor(_ color: Color?) -> _TextStyleView<Self> {
