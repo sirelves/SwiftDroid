@@ -33,6 +33,16 @@ let package = Package(
             name: "SwiftDroidTests",
             dependencies: ["SwiftDroid"]
         ),
+        // Parity: Tests/ParityFixtures symlinked into both, one per backend
+        .testTarget(
+            name: "SwiftDroidParityTests",
+            dependencies: ["SwiftDroid"]
+        ),
+        .testTarget(
+            name: "SwiftUIParityTests",
+            dependencies: ["SwiftDroidiOS"],
+            swiftSettings: [.define("PARITY_SWIFTUI")]
+        ),
         // Headless CounterApp demo — `swift run CounterAppDemo`
         .executableTarget(
             name: "CounterAppDemo",
