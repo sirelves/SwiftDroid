@@ -13,6 +13,14 @@ import SwiftDroid      // Android: core + layout + Compose mapping
 #endif
 ```
 
+## Running on the simulator
+
+`scripts/run-ios-sim.sh` compiles `SwiftDroidiOS` and
+`Examples/CounterApp/CounterView.swift` (with `-D SWIFTDROID_SWIFTUI`) plus the
+thin `Examples/CounterAppiOS` host (`App`/`WindowGroup`) using plain `swiftc`,
+assembles the `.app`, and installs it on a "SwiftDroid iPhone" simulator. The
+same `CounterView.swift` is what `swift run CounterAppDemo` runs on the core.
+
 ## Why curated aliases, not `@_exported import SwiftUI`
 
 Only the aliased names are in scope, so a view the core doesn't have

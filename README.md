@@ -83,7 +83,7 @@ Developer writes this once:
 | **2 — View Protocol** | View, ViewBuilder, TupleView, NodeElement tree | Weeks 11–18 | Complete |
 | **3 — Layout Engine** | Propose/respond model, VStack/HStack/ZStack/Text | Weeks 19–32 | Complete |
 | **4 — Android Renderer** | swift-java bridge, Compose mapping, CounterApp demo | Weeks 33–44 | In progress — **done & tested:** Button, render layer (`DrawCommand`/`CommandRenderer`), reactive `ViewHost`, the `NodeElement`→Compose mapping (`ComposeRenderer`), and a headless CounterApp demo (`swift run CounterAppDemo`). **✅ Native build verified:** with open-source Swift 6.2.3 + Android SDK 6.2.3 + NDK r27c, the **entire stack (core + Compose mapping + adapter + CounterApp) compiles AND links to a native Android ARM64 binary** — `file` reports `ELF 64-bit aarch64, interpreter /system/bin/linker64`, no JVM, no transpilation. Reproducible via `scripts/setup-android-sdk.sh` + `build-android.sh arm64`. **Remaining:** run on an emulator/device, and the swift-java → Compose `emit()` + Gradle/JNI host for the live UI (see `docs/internals/android-renderer.md`) |
-| **5 — iOS Adapter** | SwiftUI typealias layer, parity test suite | Weeks 45–52 | In progress — **done & tested:** `SwiftDroidiOS` curated typealiases onto SwiftUI/Combine; parity suite compiling the same fixtures against both backends (`SwiftDroidParityTests` / `SwiftUIParityTests`). Gaps it surfaced are fixed in the core: `Group`, synthesised `objectWillChange`, `$model.property` bindings, `@ObservedObject` re-render. See `docs/internals/ios-adapter.md`. **Remaining:** run a sample app on an iOS simulator/device |
+| **5 — iOS Adapter** | SwiftUI typealias layer, parity test suite | Weeks 45–52 | Complete — `SwiftDroidiOS` curated typealiases onto SwiftUI/Combine; parity suite compiling the same fixtures against both backends; core gaps it surfaced fixed (`Group`, synthesised `objectWillChange`, `$model.property`, `@ObservedObject` re-render). **CounterApp runs on the iOS Simulator** from the same `CounterView.swift` the headless demo uses (`scripts/run-ios-sim.sh`). See `docs/internals/ios-adapter.md` |
 
 ---
 
@@ -101,6 +101,15 @@ Developer writes this once:
 swift build
 swift test
 ```
+
+### Run on the iOS Simulator
+
+```bash
+./scripts/run-ios-sim.sh            # build, install and launch CounterApp
+./scripts/run-ios-sim.sh shot.png   # same, plus a screenshot
+```
+
+Needs Xcode with an iOS Simulator runtime; no `.xcodeproj` involved.
 
 ### Build for Android
 
