@@ -23,9 +23,16 @@ public protocol View {
     /// Composite views inherit the recursive default; primitive (leaf) views
     /// override it to emit their own node.
     func _makeNode() -> NodeElement
+
+    /// Rows for lazy containers: built on demand instead of evaluated up front.
+    func _lazyRows() -> [LazyRow]
 }
 
 extension View {
+    public func _lazyRows() -> [LazyRow] {
+        [LazyRow(path: ViewIdentity.path) { self._makeNode() }]
+    }
+
     /// Default for composite views: a view's rendered form is its body's
     /// rendered form. Recursion terminates at primitives, which override this,
     /// and ultimately at `Never` (which is never instantiated).
