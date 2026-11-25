@@ -23,10 +23,10 @@ let package = Package(
             name: "SwiftDroidAndroid",
             dependencies: ["SwiftDroid"]
         ),
-        // iOS adapter — all iOS code guarded by #if canImport(UIKit)
+        // Apple adapter: typealiases onto SwiftUI, no dependency on the core
         .target(
             name: "SwiftDroidiOS",
-            dependencies: ["SwiftDroid"]
+            dependencies: []
         ),
         // Tests run on macOS + Linux CI; depend only on SwiftDroid core
         .testTarget(
