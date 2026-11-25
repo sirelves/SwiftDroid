@@ -31,6 +31,8 @@ public struct ComposeNode: Equatable {
     /// Compose `Modifier` chain, outermost first.
     public enum Modifier: Equatable {
         case padding(EdgeInsets)
+        /// `Modifier.width/height`; `nil` leaves that axis unconstrained.
+        case size(width: Double?, height: Double?)
     }
 
     public let kind: Kind

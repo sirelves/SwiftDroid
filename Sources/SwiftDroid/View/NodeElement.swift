@@ -36,6 +36,8 @@ public struct NodeElement: Equatable {
         case button
         /// Insets its single child.
         case padding(EdgeInsets)
+        /// Fixed size on the given axes (`nil` = child's size), child placed by `alignment`.
+        case frame(width: Double?, height: Double?, alignment: Alignment)
     }
 
     public let kind: Kind

@@ -39,7 +39,7 @@ public struct CommandRenderer: Renderer {
         case .empty, .spacer:
             break // nothing to draw
 
-        case .group, .vstack, .hstack, .zstack, .padding:
+        case .group, .vstack, .hstack, .zstack, .padding, .frame:
             for child in node.children { walk(child, parentOrigin: frame.origin, into: &out) }
         }
     }

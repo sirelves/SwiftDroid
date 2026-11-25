@@ -46,6 +46,10 @@ public struct ComposeRenderer {
 
         case .padding(let insets):
             return node.children.first.flatMap(map)?.prepending(.padding(insets))
+
+        case .frame(let width, let height, let alignment):
+            guard let child = node.children.first.flatMap(map) else { return nil }
+            return ComposeNode(kind: .box(alignment: alignment), modifiers: [.size(width: width, height: height)], children: [child])
         }
     }
 

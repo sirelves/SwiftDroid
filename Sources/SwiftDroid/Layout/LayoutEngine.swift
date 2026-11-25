@@ -68,7 +68,22 @@ public struct LayoutEngine {
 
         case .padding(let insets):
             return layoutPadding(node, insets: insets, proposal: proposal)
+
+        case .frame(let width, let height, let alignment):
+            return layoutFrame(node, width: width, height: height, alignment: alignment, proposal: proposal)
         }
+    }
+
+    private func layoutFrame(_ node: NodeElement, width: Double?, height: Double?,
+                             alignment: Alignment, proposal: ProposedSize) -> LayoutResult {
+        let child = layout(node.children.first ?? NodeElement(kind: .empty),
+                           proposal: ProposedSize(width: width ?? proposal.width, height: height ?? proposal.height))
+        let size = Size(width: width ?? child.size.width, height: height ?? child.size.height)
+        let placed = LayoutResult(kind: child.kind, size: child.size,
+                                  origin: Point(x: offset(child: child.size.width, within: size.width, align: alignment.horizontal),
+                                                y: offset(child: child.size.height, within: size.height, align: alignment.vertical)),
+                                  children: child.children, action: child.action)
+        return LayoutResult(kind: node.kind, size: size, children: [placed])
     }
 
     private func layoutPadding(_ node: NodeElement, insets: EdgeInsets, proposal: ProposedSize) -> LayoutResult {
