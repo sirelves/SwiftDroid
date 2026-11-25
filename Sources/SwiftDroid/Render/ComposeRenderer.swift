@@ -50,7 +50,23 @@ public struct ComposeRenderer {
         case .frame(let width, let height, let alignment):
             guard let child = node.children.first.flatMap(map) else { return nil }
             return ComposeNode(kind: .box(alignment: alignment), modifiers: [.size(width: width, height: height)], children: [child])
+
+        case .flexFrame(let f):
+            guard let child = node.children.first.flatMap(map) else { return nil }
+            return ComposeNode(kind: .box(alignment: f.alignment), modifiers: flexModifiers(f), children: [child])
         }
+    }
+
+    // Compose has no "ideal" size; ideal only affects SwiftUI's unspecified proposals.
+    private func flexModifiers(_ f: FlexFrame) -> [ComposeNode.Modifier] {
+        var mods: [ComposeNode.Modifier] = []
+        if f.maxWidth == .infinity { mods.append(.fillMaxWidth) }
+        let maxW = f.maxWidth == .infinity ? nil : f.maxWidth
+        if f.minWidth != nil || maxW != nil { mods.append(.widthIn(min: f.minWidth, max: maxW)) }
+        if f.maxHeight == .infinity { mods.append(.fillMaxHeight) }
+        let maxH = f.maxHeight == .infinity ? nil : f.maxHeight
+        if f.minHeight != nil || maxH != nil { mods.append(.heightIn(min: f.minHeight, max: maxH)) }
+        return mods
     }
 
     /// Flatten transparent `group` children in and drop `empty` ones, mapping the

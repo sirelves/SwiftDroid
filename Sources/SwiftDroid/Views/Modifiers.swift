@@ -29,7 +29,29 @@ public struct _FrameView<Content: View>: View {
     }
 }
 
+public struct _FlexFrameView<Content: View>: View {
+    let content: Content
+    let frame: FlexFrame
+
+    public typealias Body = Never
+    public var body: Never { fatalError("_FlexFrameView has no body") }
+
+    public func _makeNode() -> NodeElement {
+        let child = content._makeNode()
+        if child.kind == .empty { return child }
+        return NodeElement(kind: .flexFrame(frame), children: [child])
+    }
+}
+
 extension View {
+    public func frame(minWidth: Double? = nil, idealWidth: Double? = nil, maxWidth: Double? = nil,
+                      minHeight: Double? = nil, idealHeight: Double? = nil, maxHeight: Double? = nil,
+                      alignment: Alignment = .center) -> _FlexFrameView<Self> {
+        _FlexFrameView(content: self, frame: FlexFrame(
+            minWidth: minWidth, idealWidth: idealWidth, maxWidth: maxWidth,
+            minHeight: minHeight, idealHeight: idealHeight, maxHeight: maxHeight, alignment: alignment))
+    }
+
     public func frame(width: Double? = nil, height: Double? = nil, alignment: Alignment = .center) -> _FrameView<Self> {
         _FrameView(content: self, width: width, height: height, alignment: alignment)
     }

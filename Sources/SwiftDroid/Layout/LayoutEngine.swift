@@ -71,7 +71,25 @@ public struct LayoutEngine {
 
         case .frame(let width, let height, let alignment):
             return layoutFrame(node, width: width, height: height, alignment: alignment, proposal: proposal)
+
+        case .flexFrame(let f):
+            return layoutFlexFrame(node, f, proposal: proposal)
         }
+    }
+
+    private func layoutFlexFrame(_ node: NodeElement, _ f: FlexFrame, proposal: ProposedSize) -> LayoutResult {
+        let childProposal = ProposedSize(
+            width: FlexFrame.childProposal(proposal.width, min: f.minWidth, ideal: f.idealWidth, max: f.maxWidth),
+            height: FlexFrame.childProposal(proposal.height, min: f.minHeight, ideal: f.idealHeight, max: f.maxHeight))
+        let child = layout(node.children.first ?? NodeElement(kind: .empty), proposal: childProposal)
+        let size = Size(
+            width: FlexFrame.resolve(proposal.width, child: child.size.width, min: f.minWidth, ideal: f.idealWidth, max: f.maxWidth),
+            height: FlexFrame.resolve(proposal.height, child: child.size.height, min: f.minHeight, ideal: f.idealHeight, max: f.maxHeight))
+        let placed = LayoutResult(kind: child.kind, size: child.size,
+                                  origin: Point(x: offset(child: child.size.width, within: size.width, align: f.alignment.horizontal),
+                                                y: offset(child: child.size.height, within: size.height, align: f.alignment.vertical)),
+                                  children: child.children, action: child.action)
+        return LayoutResult(kind: node.kind, size: size, children: [placed])
     }
 
     private func layoutFrame(_ node: NodeElement, width: Double?, height: Double?,

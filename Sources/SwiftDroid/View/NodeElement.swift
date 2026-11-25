@@ -38,6 +38,8 @@ public struct NodeElement: Equatable {
         case padding(EdgeInsets)
         /// Fixed size on the given axes (`nil` = child's size), child placed by `alignment`.
         case frame(width: Double?, height: Double?, alignment: Alignment)
+        /// min/ideal/max frame; see `FlexFrame.resolve`.
+        case flexFrame(FlexFrame)
     }
 
     public let kind: Kind

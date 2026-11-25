@@ -33,6 +33,10 @@ public struct ComposeNode: Equatable {
         case padding(EdgeInsets)
         /// `Modifier.width/height`; `nil` leaves that axis unconstrained.
         case size(width: Double?, height: Double?)
+        case widthIn(min: Double?, max: Double?)
+        case heightIn(min: Double?, max: Double?)
+        case fillMaxWidth
+        case fillMaxHeight
     }
 
     public let kind: Kind
