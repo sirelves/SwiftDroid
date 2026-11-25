@@ -11,7 +11,11 @@ struct CounterApp: View {
     var body: some View {
         VStack(spacing: 8) {
             Text("Count: \(count)")
+                .font(.largeTitle)
+                .bold()
             Button("Increment") { count += 1 }
+                .padding(.horizontal, 24)
+                .foregroundColor(.blue)
         }
     }
 }

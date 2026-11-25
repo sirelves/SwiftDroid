@@ -32,8 +32,15 @@ leakage), so a modifier the core lacks (e.g. `.foregroundColor`) compiles via
 `SwiftDroidiOS`. The parity suite is the real guard.
 
 Modifiers in the core: `.padding` (all four overloads),
-`.frame(width:height:alignment:)` and the flexible
-`.frame(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:alignment:)`.
+`.frame(width:height:alignment:)`, the flexible
+`.frame(minWidth:idealWidth:maxWidth:minHeight:idealHeight:maxHeight:alignment:)`,
+and text style: `.font`, `.fontWeight`, `.bold`, `.foregroundColor`.
+
+Text style is inherited like SwiftUI's environment (a `.textStyle` IR node;
+innermost wins per attribute). The layout engine measures text with the
+resolved font. `bold` and `fontWeight` are separate attributes, as measured in
+SwiftUI: an explicit weight beats bold at any nesting, bold beats the font's
+own weight, and an inner `bold(false)` undoes an outer `bold()`.
 
 ## Layout parity tables
 
@@ -77,6 +84,9 @@ Gaps the suite surfaced and the core now covers: `Group`, synthesised
   a plain property re-renders before the write.
 - `Group { … }.padding()` pads each child in SwiftUI; the core pads the group
   as one block.
+- `Font` sizes are iOS's default Dynamic Type values (no Dynamic Type scaling);
+  named `Color`s are iOS light-mode values (no dark mode). `Color` is not a
+  `View` in the core yet, so `Color.red.frame(...)` compiles only on iOS.
 - No `layoutPriority`; stacks' default `spacing` is a fixed 8 (SwiftUI adapts it
   per pair of views). `Spacer()` minimum is 8 in both.
 - Compose has no "ideal size": `idealWidth`/`idealHeight` only affect the core's
