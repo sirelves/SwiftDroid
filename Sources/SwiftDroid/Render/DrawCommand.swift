@@ -12,6 +12,8 @@ public struct DrawCommand: Equatable {
         case text(String)
         /// The button's tap surface; its label is emitted as a following `text`.
         case button
+        /// A scroll viewport: `frame` is the viewport, `content` the scrollable size.
+        case scroll(axes: Axis.Set, offset: Point, content: Size)
     }
 
     public let kind: Kind
@@ -19,17 +21,27 @@ public struct DrawCommand: Equatable {
     /// Present for `.button`; the tap handler to invoke when `frame` is hit.
     public let action: (() -> Void)?
     public let style: TextStyle
+    /// Visible area when inside a scroll viewport; `nil` = unclipped.
+    public let clip: Rect?
+    public let onScroll: ((Point) -> Void)?
 
-    public init(kind: Kind, frame: Rect, action: (() -> Void)? = nil, style: TextStyle = TextStyle()) {
+    public init(kind: Kind, frame: Rect, action: (() -> Void)? = nil, style: TextStyle = TextStyle(),
+                clip: Rect? = nil, onScroll: ((Point) -> Void)? = nil) {
         self.kind = kind
         self.frame = frame
         self.action = action
         self.style = style
+        self.clip = clip
+        self.onScroll = onScroll
+    }
+
+    func isHit(by point: Point) -> Bool {
+        frame.contains(point) && (clip?.contains(point) ?? true)
     }
 
     /// Structural equality — ignores `action` (closures have no equality).
     public static func == (lhs: DrawCommand, rhs: DrawCommand) -> Bool {
-        lhs.kind == rhs.kind && lhs.frame == rhs.frame && lhs.style == rhs.style
+        lhs.kind == rhs.kind && lhs.frame == rhs.frame && lhs.style == rhs.style && lhs.clip == rhs.clip
     }
 }
 
@@ -37,6 +49,6 @@ extension Array where Element == DrawCommand {
     /// The topmost interactive command whose frame contains `point` — used to
     /// route a tap to the right button. Searches back-to-front (last drawn wins).
     public func hitTest(_ point: Point) -> DrawCommand? {
-        last { $0.kind == .button && $0.frame.contains(point) }
+        last { $0.kind == .button && $0.isHit(by: point) }
     }
 }

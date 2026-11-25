@@ -77,6 +77,14 @@ public struct Rect: Equatable {
     public var width: Double { size.width }
     public var height: Double { size.height }
 
+    /// Overlapping area, or `nil` if the rects only touch or are apart.
+    public func intersection(_ other: Rect) -> Rect? {
+        let x0 = max(x, other.x), y0 = max(y, other.y)
+        let x1 = min(x + width, other.x + other.width), y1 = min(y + height, other.y + other.height)
+        guard x1 > x0, y1 > y0 else { return nil }
+        return Rect(origin: Point(x: x0, y: y0), size: Size(width: x1 - x0, height: y1 - y0))
+    }
+
     /// Whether `point` falls inside this frame (used for hit-testing taps).
     public func contains(_ point: Point) -> Bool {
         point.x >= origin.x && point.x <= origin.x + size.width &&

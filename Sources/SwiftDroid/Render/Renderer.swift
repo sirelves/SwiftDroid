@@ -18,29 +18,40 @@ public struct CommandRenderer: Renderer {
 
     public func render(_ layout: LayoutResult) -> [DrawCommand] {
         var out: [DrawCommand] = []
-        walk(layout, parentOrigin: .zero, into: &out)
+        walk(layout, parentOrigin: .zero, clip: nil, into: &out)
         return out
     }
 
-    private func walk(_ node: LayoutResult, parentOrigin: Point, into out: inout [DrawCommand]) {
+    // Leaves outside the current clip are culled; containers are always walked
+    // because children may overflow their parent's frame.
+    private func walk(_ node: LayoutResult, parentOrigin: Point, clip: Rect?, into out: inout [DrawCommand]) {
         let frame = Rect(
             origin: Point(x: parentOrigin.x + node.origin.x, y: parentOrigin.y + node.origin.y),
             size: node.size
         )
+        let visible = clip.map { frame.intersection($0) != nil } ?? true
 
         switch node.kind {
         case .text(let content):
-            out.append(DrawCommand(kind: .text(content), frame: frame, style: node.textStyle))
+            if visible { out.append(DrawCommand(kind: .text(content), frame: frame, style: node.textStyle, clip: clip)) }
 
         case .button:
-            out.append(DrawCommand(kind: .button, frame: frame, action: node.action))
-            for child in node.children { walk(child, parentOrigin: frame.origin, into: &out) }
+            if visible { out.append(DrawCommand(kind: .button, frame: frame, action: node.action, clip: clip)) }
+            for child in node.children { walk(child, parentOrigin: frame.origin, clip: clip, into: &out) }
+
+        case .scroll(let axes, let offset):
+            guard visible else { return }
+            let content = node.children.first?.size ?? .zero
+            out.append(DrawCommand(kind: .scroll(axes: axes, offset: offset, content: content), frame: frame,
+                                   clip: clip, onScroll: node.onScroll))
+            let viewport = clip.flatMap { frame.intersection($0) } ?? frame
+            for child in node.children { walk(child, parentOrigin: frame.origin, clip: viewport, into: &out) }
 
         case .empty, .spacer:
-            break // nothing to draw
+            break
 
-        case .group, .vstack, .hstack, .zstack, .padding, .frame, .flexFrame, .textStyle, .scroll:
-            for child in node.children { walk(child, parentOrigin: frame.origin, into: &out) }
+        case .group, .vstack, .hstack, .zstack, .padding, .frame, .flexFrame, .textStyle:
+            for child in node.children { walk(child, parentOrigin: frame.origin, clip: clip, into: &out) }
         }
     }
 }

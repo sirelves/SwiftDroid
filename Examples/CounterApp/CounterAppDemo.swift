@@ -34,6 +34,7 @@ struct CounterAppDemo {
             switch command.kind {
             case .text(let content): print("  text   \"\(content)\"  \(pos)")
             case .button:            print("  button  \(pos)")
+            case .scroll:            print("  scroll  \(pos)")
             }
         }
     }
