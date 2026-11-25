@@ -11,7 +11,7 @@ extension Optional: View where Wrapped: View {
 
     public func _makeNode() -> NodeElement {
         switch self {
-        case .some(let wrapped): return wrapped._makeNode()
+        case .some(let wrapped): return ViewIdentity.with(.branch(true)) { wrapped._makeNode() }
         case .none: return NodeElement(kind: .empty)
         }
     }

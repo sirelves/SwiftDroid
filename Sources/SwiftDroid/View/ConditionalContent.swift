@@ -25,8 +25,8 @@ public struct _ConditionalContent<TrueContent: View, FalseContent: View>: View {
 
     public func _makeNode() -> NodeElement {
         switch storage {
-        case .first(let content): return content._makeNode()
-        case .second(let content): return content._makeNode()
+        case .first(let content): return ViewIdentity.with(.branch(true)) { content._makeNode() }
+        case .second(let content): return ViewIdentity.with(.branch(false)) { content._makeNode() }
         }
     }
 }

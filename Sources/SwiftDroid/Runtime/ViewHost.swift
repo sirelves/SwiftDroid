@@ -16,6 +16,7 @@ public final class ViewHost<Root: View> {
     private let engine: LayoutEngine
     private let renderer = CommandRenderer()
     private var proposal: ProposedSize
+    private let stateStore = StateStore()
 
     /// The most recently rendered frame.
     public private(set) var commands: [DrawCommand] = []
@@ -39,7 +40,7 @@ public final class ViewHost<Root: View> {
     public func render() {
         var node = NodeElement(kind: .empty)
         DependencyTracker.shared.withObservation(observation) {
-            node = root._makeNode()
+            node = stateStore.render { root._makeNode() }
         }
         let layout = engine.layout(node, proposal: proposal)
         commands = renderer.render(layout)

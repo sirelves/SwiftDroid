@@ -22,8 +22,9 @@ public struct TupleView<T>: View {
 
     public func _makeNode() -> NodeElement {
         let mirror = Mirror(reflecting: value)
-        let children = mirror.children.compactMap { child -> NodeElement? in
-            (child.value as? any View)?._makeNode()
+        let children = mirror.children.enumerated().compactMap { index, child -> NodeElement? in
+            guard let view = child.value as? any View else { return nil }
+            return ViewIdentity.with(.index(index)) { view._makeNode() }
         }
         return NodeElement(kind: .group, children: children)
     }

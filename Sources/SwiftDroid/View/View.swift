@@ -30,7 +30,10 @@ extension View {
     /// rendered form. Recursion terminates at primitives, which override this,
     /// and ultimately at `Never` (which is never instantiated).
     public func _makeNode() -> NodeElement {
-        body._makeNode()
+        ViewIdentity.with(.type(ObjectIdentifier(Self.self))) {
+            ViewIdentity.bindState(of: self)
+            return body._makeNode()
+        }
     }
 }
 
