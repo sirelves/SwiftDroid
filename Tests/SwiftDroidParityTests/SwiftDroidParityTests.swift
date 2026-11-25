@@ -77,8 +77,9 @@ final class SwiftDroidParityTests: XCTestCase {
             Size(width: 16, height: 24),
             Size(width: 100, height: 40),
             Size(width: 10, height: 46),
+            Size(width: 20, height: 20),
         ])
-        XCTAssertEqual(r.size.height, 52 + 36 + 20 + 24 + 40 + 46)
+        XCTAssertEqual(r.size.height, 52 + 36 + 20 + 24 + 40 + 46 + 20)
     }
 
     func testGroupFlattensElevenChildren() {

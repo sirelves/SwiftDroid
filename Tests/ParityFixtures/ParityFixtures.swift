@@ -114,6 +114,7 @@ struct ParityModifiers: View {
             Text("e").frame(width: 100, height: 40, alignment: .topLeading)
             Text("f").frame(height: 30).padding(.top)
             EmptyView().padding().frame(width: 50)
+            Text("g").frame(minWidth: 20, maxWidth: .infinity, alignment: .leading)
         }
     }
 }
