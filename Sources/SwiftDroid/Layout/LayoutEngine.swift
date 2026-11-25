@@ -133,7 +133,7 @@ public struct LayoutEngine {
 
     // MARK: - Stack layout (VStack / HStack share this, parameterised by axis)
 
-    private enum Axis { case vertical, horizontal }
+    private enum StackAxis { case vertical, horizontal }
     private enum CrossAlign { case start, center, end }
 
     /// SwiftUI's stack algorithm (verified by probing SwiftUI): children are
@@ -141,7 +141,7 @@ public struct LayoutEngine {
     /// source order); each is offered an equal share of what is left and keeps
     /// what it takes. An unspecified main proposal asks every child for its ideal.
     private func layoutStack(
-        _ node: NodeElement, axis: Axis, spacing: Double,
+        _ node: NodeElement, axis: StackAxis, spacing: Double,
         align: CrossAlign, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass
     ) -> LayoutResult {
         let children = flattenedChildren(of: node)
@@ -234,25 +234,25 @@ public struct LayoutEngine {
 
     // MARK: - Axis helpers (map main/cross ↔ width/height for the active axis)
 
-    private func mainOf(_ s: Size, _ axis: Axis) -> Double {
+    private func mainOf(_ s: Size, _ axis: StackAxis) -> Double {
         axis == .vertical ? s.height : s.width
     }
-    private func crossOf(_ s: Size, _ axis: Axis) -> Double {
+    private func crossOf(_ s: Size, _ axis: StackAxis) -> Double {
         axis == .vertical ? s.width : s.height
     }
-    private func mainOf(_ p: ProposedSize, _ axis: Axis) -> Double? {
+    private func mainOf(_ p: ProposedSize, _ axis: StackAxis) -> Double? {
         axis == .vertical ? p.height : p.width
     }
-    private func crossOf(_ p: ProposedSize, _ axis: Axis) -> Double? {
+    private func crossOf(_ p: ProposedSize, _ axis: StackAxis) -> Double? {
         axis == .vertical ? p.width : p.height
     }
-    private func makeSize(main: Double, cross: Double, axis: Axis) -> Size {
+    private func makeSize(main: Double, cross: Double, axis: StackAxis) -> Size {
         axis == .vertical ? Size(width: cross, height: main) : Size(width: main, height: cross)
     }
-    private func makeProposal(main: Double?, cross: Double?, axis: Axis) -> ProposedSize {
+    private func makeProposal(main: Double?, cross: Double?, axis: StackAxis) -> ProposedSize {
         axis == .vertical ? ProposedSize(width: cross, height: main) : ProposedSize(width: main, height: cross)
     }
-    private func makePoint(main: Double, cross: Double, axis: Axis) -> Point {
+    private func makePoint(main: Double, cross: Double, axis: StackAxis) -> Point {
         axis == .vertical ? Point(x: cross, y: main) : Point(x: main, y: cross)
     }
 
