@@ -21,6 +21,8 @@ public typealias TupleView = SwiftUI.TupleView
 public typealias Alignment = SwiftUI.Alignment
 public typealias HorizontalAlignment = SwiftUI.HorizontalAlignment
 public typealias VerticalAlignment = SwiftUI.VerticalAlignment
+public typealias EdgeInsets = SwiftUI.EdgeInsets
+public typealias Edge = SwiftUI.Edge
 
 public typealias State = SwiftUI.State
 public typealias Binding = SwiftUI.Binding

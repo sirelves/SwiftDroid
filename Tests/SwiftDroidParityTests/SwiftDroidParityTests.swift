@@ -68,6 +68,19 @@ final class SwiftDroidParityTests: XCTestCase {
         XCTAssertTrue(texts(h.commands).contains("renamed: 1"))
     }
 
+    func testModifiersLayout() {
+        let r = LayoutEngine.monospace(charWidth: 10, lineHeight: 20).layout(makeNode(ParityModifiers()), proposal: .unspecified)
+        XCTAssertEqual(r.children.map(\.size), [
+            Size(width: 42, height: 52),
+            Size(width: 26, height: 36),
+            Size(width: 34, height: 20),
+            Size(width: 16, height: 24),
+            Size(width: 100, height: 40),
+            Size(width: 10, height: 46),
+        ])
+        XCTAssertEqual(r.size.height, 52 + 36 + 20 + 24 + 40 + 46)
+    }
+
     func testGroupFlattensElevenChildren() {
         XCTAssertEqual(compose(ParityGroup()).children.count, 11)
     }

@@ -104,6 +104,20 @@ struct ParityNameEditor: View {
     }
 }
 
+struct ParityModifiers: View {
+    var body: some View {
+        VStack(spacing: 0) {
+            Text("a").padding()
+            Text("b").padding(8)
+            Text("c").padding(.horizontal, 12)
+            Text("d").padding(EdgeInsets(top: 1, leading: 2, bottom: 3, trailing: 4))
+            Text("e").frame(width: 100, height: 40, alignment: .topLeading)
+            Text("f").frame(height: 30).padding(.top)
+            EmptyView().padding().frame(width: 50)
+        }
+    }
+}
+
 struct ParityGroup: View {
     var body: some View {
         VStack {

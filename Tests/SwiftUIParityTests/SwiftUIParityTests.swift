@@ -2,6 +2,9 @@
 import XCTest
 import SwiftUI
 import Combine
+#if canImport(AppKit)
+import AppKit
+#endif
 
 // Compiling the fixtures is the main assertion; these check they really are
 // SwiftUI types and that SwiftUI can render each one.
@@ -21,7 +24,24 @@ final class SwiftUIParityTests: XCTestCase {
         assertRenders(ParityBindingParent())
         assertRenders(ParityModelView(model: ParityModel()))
         assertRenders(ParityGroup())
+        assertRenders(ParityModifiers())
     }
+
+    #if canImport(AppKit)
+    // Same deltas over the text's natural size that SwiftDroidParityTests.testModifiersLayout expects.
+    func testModifierLayoutMatchesCore() {
+        func size<V: SwiftUI.View>(_ v: V) -> CGSize { NSHostingController(rootView: v).view.fittingSize }
+        let t = size(Text("a"))
+        XCTAssertEqual(size(Text("a").padding()), CGSize(width: t.width + 32, height: t.height + 32))
+        XCTAssertEqual(size(Text("a").padding(8)), CGSize(width: t.width + 16, height: t.height + 16))
+        XCTAssertEqual(size(Text("a").padding(.horizontal, 12)), CGSize(width: t.width + 24, height: t.height))
+        XCTAssertEqual(size(Text("a").padding(EdgeInsets(top: 1, leading: 2, bottom: 3, trailing: 4))),
+                       CGSize(width: t.width + 6, height: t.height + 4))
+        XCTAssertEqual(size(Text("a").frame(width: 100, height: 40, alignment: .topLeading)), CGSize(width: 100, height: 40))
+        XCTAssertEqual(size(Text("a").frame(height: 30).padding(.top)), CGSize(width: t.width, height: 46))
+        XCTAssertEqual(size(VStack(spacing: 0) { EmptyView().padding().frame(width: 50); Text("a") }), t)
+    }
+    #endif
 
     func testModelUsesCombineSynthesisedPublisher() {
         let model = ParityModel()
