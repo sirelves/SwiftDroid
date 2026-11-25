@@ -50,7 +50,7 @@ public struct CommandRenderer: Renderer {
         case .empty, .spacer:
             break
 
-        case .group, .vstack, .hstack, .zstack, .padding, .frame, .flexFrame, .textStyle:
+        case .group, .vstack, .hstack, .zstack, .padding, .frame, .flexFrame, .textStyle, .lazyVStack:
             for child in node.children { walk(child, parentOrigin: frame.origin, clip: clip, into: &out) }
         }
     }

@@ -26,6 +26,9 @@ public struct LayoutResult: Equatable {
 
     public let onScroll: ((Point) -> Void)?
 
+    /// Set on lazy stacks so the enclosing scroll can record where they sit.
+    let lazyPath: [Int]?
+
     public init(
         kind: NodeElement.Kind,
         size: Size,
@@ -35,6 +38,7 @@ public struct LayoutResult: Equatable {
         textStyle: TextStyle = TextStyle(),
         onScroll: ((Point) -> Void)? = nil
     ) {
+        self.lazyPath = nil
         self.kind = kind
         self.size = size
         self.origin = origin
@@ -44,8 +48,24 @@ public struct LayoutResult: Equatable {
         self.onScroll = onScroll
     }
 
+    init(lazyStack kind: NodeElement.Kind, size: Size, children: [LayoutResult], path: [Int]) {
+        self.kind = kind
+        self.size = size
+        self.origin = .zero
+        self.children = children
+        self.action = nil
+        self.textStyle = TextStyle()
+        self.onScroll = nil
+        self.lazyPath = path
+    }
+
+    private init(copying r: LayoutResult, origin: Point) {
+        kind = r.kind; size = r.size; self.origin = origin; children = r.children
+        action = r.action; textStyle = r.textStyle; onScroll = r.onScroll; lazyPath = r.lazyPath
+    }
+
     func moved(to origin: Point) -> LayoutResult {
-        LayoutResult(kind: kind, size: size, origin: origin, children: children, action: action, textStyle: textStyle, onScroll: onScroll)
+        LayoutResult(copying: self, origin: origin)
     }
 
     public static func == (lhs: LayoutResult, rhs: LayoutResult) -> Bool {

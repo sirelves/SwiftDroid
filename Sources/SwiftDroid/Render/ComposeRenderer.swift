@@ -59,6 +59,10 @@ public struct ComposeRenderer {
                 : h ? .row(spacing: 0, alignment: .center) : .column(spacing: 0, alignment: .center)
             return ComposeNode(kind: kind, modifiers: (v ? [.verticalScroll] : []) + (h ? [.horizontalScroll] : []), children: [child])
 
+        case .lazyVStack(let spacing, let alignment):
+            return ComposeNode(kind: .lazyColumn(spacing: spacing, alignment: alignment),
+                               lazyItems: node.lazyRows.map { row in { map(row.makeNode(), style) } })
+
         case .textStyle(let inner):
             return node.children.first.flatMap { map($0, inner.inheriting(from: style)) }
 

@@ -27,8 +27,8 @@ public struct LayoutEngine {
     }
 
     /// Lay out `node` given a `proposal`, returning the resolved tree.
-    public func layout(_ node: NodeElement, proposal: ProposedSize) -> LayoutResult {
-        layout(node, proposal: proposal, at: [], style: TextStyle(), in: LayoutPass())
+    public func layout(_ node: NodeElement, proposal: ProposedSize, lazyCache: LazyCache? = nil) -> LayoutResult {
+        layout(node, proposal: proposal, at: [], style: TextStyle(), in: LayoutPass(lazy: lazyCache ?? LazyCache()))
     }
 
     // Stacks measure each child several times (at 0, ∞ and its share), so a
@@ -94,6 +94,9 @@ public struct LayoutEngine {
         case .scroll(let axes, let offset):
             return layoutScroll(node, axes: axes, offset: offset, proposal: proposal, at: path, style: style, in: pass)
 
+        case .lazyVStack(let spacing, let alignment):
+            return layoutLazyVStack(node, spacing: spacing, alignment: alignment, proposal: proposal, at: path, style: style, in: pass)
+
         case .flexFrame(let f):
             return layoutFlexFrame(node, f, proposal: proposal, at: path, style: style, in: pass)
         }
@@ -105,16 +108,79 @@ public struct LayoutEngine {
     private func layoutScroll(_ node: NodeElement, axes: Axis.Set, offset: Point, proposal: ProposedSize,
                               at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
         let h = axes.contains(.horizontal), v = axes.contains(.vertical)
-        let content = layout(node.children.first ?? NodeElement(kind: .empty),
-                             proposal: ProposedSize(width: h ? nil : proposal.width, height: v ? nil : proposal.height),
-                             at: path + [0], style: style, in: pass)
-        let size = Size(width: h ? (proposal.width ?? content.size.width) : content.size.width,
+        let contentProposal = ProposedSize(width: h ? nil : proposal.width, height: v ? nil : proposal.height)
+        let viewportHeight = v ? finite(proposal.height) : nil
+
+        // Lazy stacks inside need the visible window, which depends on the clamped
+        // offset and on where they sit — both known only after layout. Start from
+        // last frame's positions and redo layout if either moved (rarely twice).
+        var windowTop = max(0, offset.y)
+        var content = LayoutResult(kind: .empty, size: .zero)
+        var size = Size.zero
+        var clamped = Point.zero
+        for _ in 0..<3 {
+            let sub = LayoutPass(lazy: pass.lazy)
+            sub.window = viewportHeight.map { (top: windowTop, bottom: windowTop + $0) }
+            content = layout(node.children.first ?? NodeElement(kind: .empty), proposal: contentProposal,
+                             at: path + [0], style: style, in: sub)
+            size = Size(width: h ? (proposal.width ?? content.size.width) : content.size.width,
                         height: v ? (proposal.height ?? content.size.height) : content.size.height)
-        let clamped = Point(x: min(max(0, offset.x), max(0, content.size.width - size.width)),
+            clamped = Point(x: min(max(0, offset.x), max(0, content.size.width - size.width)),
                             y: min(max(0, offset.y), max(0, content.size.height - size.height)))
+            let moved = recordLazyOrigins(content, y: 0, in: pass.lazy)
+            if viewportHeight == nil || (clamped.y == windowTop && !moved) { break }
+            windowTop = clamped.y
+        }
         return LayoutResult(kind: .scroll(axes: axes, offset: clamped), size: size,
                             children: [content.moved(to: Point(x: -clamped.x, y: -clamped.y))],
                             onScroll: node.onScroll)
+    }
+
+    /// Records each lazy stack's y within this scroll's content; true if any changed.
+    private func recordLazyOrigins(_ r: LayoutResult, y: Double, in cache: LazyCache) -> Bool {
+        var moved = false
+        if let p = r.lazyPath, cache.origins[p] != y {
+            cache.origins[p] = y
+            moved = true
+        }
+        if case .scroll = r.kind { return moved }  // nested scrolls record their own
+        for child in r.children where recordLazyOrigins(child, y: y + child.origin.y, in: cache) { moved = true }
+        return moved
+    }
+
+    // Measured in SwiftUI: only rows intersecting the viewport are built (no
+    // overscan); the rest are estimated, and the stack takes the proposed width.
+    private func layoutLazyVStack(_ node: NodeElement, spacing: Double, alignment: HorizontalAlignment,
+                                  proposal: ProposedSize, at path: [Int], style: TextStyle,
+                                  in pass: LayoutPass) -> LayoutResult {
+        let cache = pass.lazy
+        let origin = cache.origins[path] ?? 0
+        let window = pass.window.map { (top: $0.top - origin, bottom: $0.bottom - origin) }
+        let known = node.lazyRows.compactMap { cache.heights[$0.key] }
+        var estimate = known.isEmpty ? nil : known.reduce(0, +) / Double(known.count)
+
+        var built: [(LayoutResult, Double)] = []
+        var y = 0.0
+        for (i, row) in node.lazyRows.enumerated() {
+            cache.touch(row.key)
+            let guess = cache.heights[row.key] ?? estimate
+            let visible = window.map { w in guess.map { y + $0 > w.top && y < w.bottom } ?? true } ?? true
+            if visible {
+                let r = layout(row.makeNode(), proposal: ProposedSize(width: proposal.width, height: nil),
+                               at: path + [i], style: style, in: pass)
+                cache.heights[row.key] = r.size.height
+                estimate = estimate ?? r.size.height
+                built.append((r, y))
+                y += r.size.height + spacing
+            } else {
+                ViewIdentity.store?.retain(prefix: row.key)
+                y += (guess ?? 0) + spacing
+            }
+        }
+        let height = node.lazyRows.isEmpty ? 0 : y - spacing
+        let width = proposal.width ?? built.map(\.0.size.width).max() ?? 0
+        let placed = built.map { r, y in r.moved(to: Point(x: offset(child: r.size.width, within: width, align: alignment), y: y)) }
+        return LayoutResult(lazyStack: node.kind, size: Size(width: width, height: height), children: placed, path: path)
     }
 
     private func layoutFlexFrame(_ node: NodeElement, _ f: FlexFrame, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
@@ -332,6 +398,11 @@ final class LayoutPass {
         let height: Double?
     }
     var cache: [Key: LayoutResult] = [:]
+    let lazy: LazyCache
+    /// Visible vertical range in the enclosing scroll's content coordinates.
+    var window: (top: Double, bottom: Double)?
+
+    init(lazy: LazyCache) { self.lazy = lazy }
 }
 
 extension LayoutEngine {

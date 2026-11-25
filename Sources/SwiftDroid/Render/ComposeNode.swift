@@ -26,6 +26,8 @@ public struct ComposeNode: Equatable {
         case box(alignment: Alignment)
         /// Maps from `Spacer` → Compose `Spacer`.
         case spacer(minLength: Double)
+        /// `LazyColumn`; items are built on demand through `lazyItems`.
+        case lazyColumn(spacing: Double, alignment: HorizontalAlignment)
     }
 
     /// Compose `Modifier` chain, outermost first.
@@ -46,12 +48,16 @@ public struct ComposeNode: Equatable {
     public let children: [ComposeNode]
     /// Resolved style for `.text` (Compose `Text(fontSize, fontWeight, color)`).
     public let textStyle: TextStyle
+    /// Item builders for `.lazyColumn` (Compose `items(count) { i -> … }`).
+    public let lazyItems: [() -> ComposeNode?]
     /// Tap handler for `.button`; `nil` otherwise. Excluded from equality.
     public let action: (() -> Void)?
 
     public init(kind: Kind, modifiers: [Modifier] = [], children: [ComposeNode] = [],
-                action: (() -> Void)? = nil, textStyle: TextStyle = TextStyle()) {
+                action: (() -> Void)? = nil, textStyle: TextStyle = TextStyle(),
+                lazyItems: [() -> ComposeNode?] = []) {
         self.textStyle = textStyle
+        self.lazyItems = lazyItems
         self.kind = kind
         self.modifiers = modifiers
         self.children = children
@@ -59,11 +65,11 @@ public struct ComposeNode: Equatable {
     }
 
     func prepending(_ modifier: Modifier) -> ComposeNode {
-        ComposeNode(kind: kind, modifiers: [modifier] + modifiers, children: children, action: action, textStyle: textStyle)
+        ComposeNode(kind: kind, modifiers: [modifier] + modifiers, children: children, action: action, textStyle: textStyle, lazyItems: lazyItems)
     }
 
     public static func == (lhs: ComposeNode, rhs: ComposeNode) -> Bool {
         lhs.kind == rhs.kind && lhs.modifiers == rhs.modifiers && lhs.children == rhs.children
-            && lhs.textStyle == rhs.textStyle
+            && lhs.textStyle == rhs.textStyle && lhs.lazyItems.count == rhs.lazyItems.count
     }
 }

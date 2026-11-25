@@ -17,6 +17,7 @@ public final class ViewHost<Root: View> {
     private let renderer = CommandRenderer()
     private var proposal: ProposedSize
     private let stateStore = StateStore()
+    private let lazyCache = LazyCache()
 
     /// The most recently rendered frame.
     public private(set) var commands: [DrawCommand] = []
@@ -38,11 +39,13 @@ public final class ViewHost<Root: View> {
     /// Re-evaluate, lay out, and render the root view. Called once at init and
     /// again on every state invalidation.
     public func render() {
-        var node = NodeElement(kind: .empty)
+        // Layout runs inside the same scope: lazy containers build rows during
+        // layout, and those rows' state reads must subscribe and stay reachable.
+        var layout = LayoutResult(kind: .empty, size: .zero)
         DependencyTracker.shared.withObservation(observation) {
-            node = stateStore.render { root._makeNode() }
+            layout = stateStore.render { engine.layout(root._makeNode(), proposal: proposal, lazyCache: lazyCache) }
         }
-        let layout = engine.layout(node, proposal: proposal)
+        lazyCache.endFrame()
         commands = renderer.render(layout)
         onRender?(commands)
     }

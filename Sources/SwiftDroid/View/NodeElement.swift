@@ -44,6 +44,8 @@ public struct NodeElement: Equatable {
         case textStyle(TextStyle)
         /// Scrollable viewport over its single child; `offset` is the scroll position.
         case scroll(axes: Axis.Set, offset: Point)
+        /// Vertical stack whose rows (`lazyRows`) are only built when visible.
+        case lazyVStack(spacing: Double, alignment: HorizontalAlignment)
     }
 
     public let kind: Kind
@@ -56,12 +58,15 @@ public struct NodeElement: Equatable {
     /// Scroll-position setter for `.scroll`; `nil` otherwise. Excluded from equality.
     public let onScroll: ((Point) -> Void)?
 
+    public let lazyRows: [LazyRow]
+
     public init(kind: Kind, children: [NodeElement] = [], action: (() -> Void)? = nil,
-                onScroll: ((Point) -> Void)? = nil) {
+                onScroll: ((Point) -> Void)? = nil, lazyRows: [LazyRow] = []) {
         self.kind = kind
         self.children = children
         self.action = action
         self.onScroll = onScroll
+        self.lazyRows = lazyRows
     }
 
     /// Structural equality: compares `kind` and `children` only. `action` is
@@ -69,5 +74,6 @@ public struct NodeElement: Equatable {
     /// snapshot tests care about the tree shape, not handler identity.
     public static func == (lhs: NodeElement, rhs: NodeElement) -> Bool {
         lhs.kind == rhs.kind && lhs.children == rhs.children
+            && lhs.lazyRows.map(\.path) == rhs.lazyRows.map(\.path)
     }
 }
