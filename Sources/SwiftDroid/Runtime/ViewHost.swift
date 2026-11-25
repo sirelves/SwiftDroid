@@ -59,4 +59,22 @@ public final class ViewHost<Root: View> {
     public func tap(at point: Point) {
         commands.hitTest(point)?.action?()
     }
+
+    /// Scroll the innermost viewport under `point` that scrolls on each axis;
+    /// what it can't absorb goes to the enclosing one (nested scrolling).
+    public func scroll(at point: Point, by delta: Point) {
+        var remaining = delta
+        InvalidationQueue.shared.transaction {
+            for command in commands.reversed() where command.isHit(by: point) {
+                guard case .scroll(let axes, let offset, let content) = command.kind else { continue }
+                let maxX = axes.contains(.horizontal) ? max(0, content.width - command.frame.width) : 0
+                let maxY = axes.contains(.vertical) ? max(0, content.height - command.frame.height) : 0
+                let next = Point(x: min(max(0, offset.x + remaining.x), maxX),
+                                 y: min(max(0, offset.y + remaining.y), maxY))
+                remaining = Point(x: remaining.x - (next.x - offset.x), y: remaining.y - (next.y - offset.y))
+                if next != offset { command.onScroll?(next) }
+                if remaining == .zero { break }
+            }
+        }
+    }
 }
