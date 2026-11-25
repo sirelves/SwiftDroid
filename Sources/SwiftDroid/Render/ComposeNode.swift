@@ -28,6 +28,7 @@ public struct ComposeNode: Equatable {
         case spacer(minLength: Double)
         /// `LazyColumn`; items are built on demand through `lazyItems`.
         case lazyColumn(spacing: Double, alignment: HorizontalAlignment)
+        case divider
     }
 
     /// Compose `Modifier` chain, outermost first.

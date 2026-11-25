@@ -47,6 +47,9 @@ public struct CommandRenderer: Renderer {
             let viewport = clip.flatMap { frame.intersection($0) } ?? frame
             for child in node.children { walk(child, parentOrigin: frame.origin, clip: viewport, into: &out) }
 
+        case .divider:
+            if visible { out.append(DrawCommand(kind: .rule, frame: frame, clip: clip)) }
+
         case .empty, .spacer:
             break
 

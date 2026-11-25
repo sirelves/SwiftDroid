@@ -46,6 +46,8 @@ public struct NodeElement: Equatable {
         case scroll(axes: Axis.Set, offset: Point)
         /// Vertical stack whose rows (`lazyRows`) are only built when visible.
         case lazyVStack(spacing: Double, alignment: HorizontalAlignment)
+        /// Hairline; horizontal except along an HStack's main axis.
+        case divider
     }
 
     public let kind: Kind

@@ -17,6 +17,9 @@ public struct LayoutEngine {
 
     public let measureText: StyledTextMeasurer
 
+    /// Measured on iOS (2x): a Divider is 0.5pt thick.
+    static let hairline = 0.5
+
     public init(measureText: @escaping StyledTextMeasurer) {
         self.measureText = measureText
     }
@@ -48,6 +51,9 @@ public struct LayoutEngine {
 
         case .text(let content):
             return LayoutResult(kind: node.kind, size: measureText(content, style.resolvedFont, proposal), textStyle: style)
+
+        case .divider:
+            return LayoutResult(kind: .divider, size: Size(width: finite(proposal.width) ?? 0, height: Self.hairline))
 
         case .spacer:
             // A spacer is only meaningful inside a stack, where the stack resolves
@@ -240,6 +246,9 @@ public struct LayoutEngine {
             if case .spacer(let minLength) = child.kind {
                 let length = main.map { max(minLength, $0) } ?? minLength
                 return LayoutResult(kind: child.kind, size: makeSize(main: length, cross: 0, axis: axis))
+            }
+            if child.kind == .divider {
+                return LayoutResult(kind: .divider, size: makeSize(main: Self.hairline, cross: finite(crossProp) ?? 0, axis: axis))
             }
             return layout(child, proposal: makeProposal(main: main, cross: crossProp, axis: axis), at: path + [i], style: style, in: pass)
         }

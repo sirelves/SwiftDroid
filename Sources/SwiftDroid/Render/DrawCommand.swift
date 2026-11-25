@@ -14,6 +14,8 @@ public struct DrawCommand: Equatable {
         case button
         /// A scroll viewport: `frame` is the viewport, `content` the scrollable size.
         case scroll(axes: Axis.Set, offset: Point, content: Size)
+        /// A filled hairline (`Divider`, list separators).
+        case rule
     }
 
     public let kind: Kind

@@ -24,6 +24,9 @@ public struct ComposeRenderer {
         case .text(let content):
             return ComposeNode(kind: .text(content), textStyle: style)
 
+        case .divider:
+            return ComposeNode(kind: .divider)
+
         case .spacer(let minLength):
             return ComposeNode(kind: .spacer(minLength: minLength))
 

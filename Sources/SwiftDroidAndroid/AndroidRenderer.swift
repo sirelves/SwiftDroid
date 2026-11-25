@@ -32,6 +32,7 @@ public enum AndroidRenderer {
         case .row(let sp, let a):              label = "Row(spacing: \(sp), \(a))"
         case .box(let a):                      label = "Box(\(a))"
         case .spacer(let m):                   label = "Spacer(min: \(m))"
+        case .divider:                         label = "Divider"
         case .lazyColumn(let sp, let a):       label = "LazyColumn(spacing: \(sp), \(a), items: \(node.lazyItems.count))"
         }
         let mods = node.modifiers.isEmpty ? "" : "  .\(node.modifiers.map { "\($0)" }.joined(separator: "."))"

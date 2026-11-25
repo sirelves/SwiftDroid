@@ -16,6 +16,7 @@ public typealias VStack = SwiftUI.VStack
 public typealias HStack = SwiftUI.HStack
 public typealias ZStack = SwiftUI.ZStack
 public typealias Group = SwiftUI.Group
+public typealias Divider = SwiftUI.Divider
 public typealias TupleView = SwiftUI.TupleView
 public typealias ForEach = SwiftUI.ForEach
 public typealias ScrollView = SwiftUI.ScrollView

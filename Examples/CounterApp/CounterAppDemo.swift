@@ -35,6 +35,7 @@ struct CounterAppDemo {
             case .text(let content): print("  text   \"\(content)\"  \(pos)")
             case .button:            print("  button  \(pos)")
             case .scroll:            print("  scroll  \(pos)")
+            case .rule:              print("  rule    \(pos)")
             }
         }
     }
