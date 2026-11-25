@@ -1,21 +1,5 @@
 import SwiftDroid
 
-/// The canonical SwiftDroid demo: a counter built from `@State`, `Text`, `Button`
-/// and `VStack` — the exact SwiftUI programming model, running on the platform-
-/// agnostic core. On Android this same view drives Jetpack Compose; here it runs
-/// headless so the full pipeline (reactivity → layout → render) is observable in
-/// a terminal.
-struct CounterApp: View {
-    @State var count = 0
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("Count: \(count)")
-            Button("Increment") { count += 1 }
-        }
-    }
-}
-
 @main
 struct CounterAppDemo {
     static func main() {
