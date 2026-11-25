@@ -18,12 +18,14 @@ public typealias ZStack = SwiftUI.ZStack
 public typealias Group = SwiftUI.Group
 public typealias TupleView = SwiftUI.TupleView
 public typealias ForEach = SwiftUI.ForEach
+public typealias ScrollView = SwiftUI.ScrollView
 
 public typealias Alignment = SwiftUI.Alignment
 public typealias HorizontalAlignment = SwiftUI.HorizontalAlignment
 public typealias VerticalAlignment = SwiftUI.VerticalAlignment
 public typealias EdgeInsets = SwiftUI.EdgeInsets
 public typealias Edge = SwiftUI.Edge
+public typealias Axis = SwiftUI.Axis
 
 public typealias Font = SwiftUI.Font
 public typealias Color = SwiftUI.Color

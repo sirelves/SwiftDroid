@@ -104,6 +104,13 @@ final class SwiftDroidParityTests: XCTestCase {
         XCTAssertEqual(Array(texts(h.commands).prefix(2)), ["✓ eggs", "○ milk"])
     }
 
+    func testScrollingFixtureCullsAndScrolls() {
+        let h = ViewHost(ParityScrolling(), engine: .monospace(charWidth: 10, lineHeight: 20), proposal: ProposedSize(width: 300, height: 600))
+        XCTAssertFalse(texts(h.commands).contains("line 16"))  // rows are 28pt (20 + spacing 8)
+        h.scroll(at: Point(x: 150, y: 10), by: Point(x: 0, y: 400))
+        XCTAssertTrue(texts(h.commands).contains("line 16"))
+    }
+
     func testGroupFlattensElevenChildren() {
         XCTAssertEqual(compose(ParityGroup()).children.count, 11)
     }

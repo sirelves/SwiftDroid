@@ -173,6 +173,23 @@ struct ParityLists: View {
     }
 }
 
+struct ParityScrolling: View {
+    var body: some View {
+        VStack {
+            ScrollView {
+                VStack(alignment: .leading) {
+                    ForEach(0..<30) { Text("line \($0)") }
+                }
+            }
+            .frame(height: 120)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack { ForEach(0..<10) { Text("chip \($0)").padding(8) } }
+            }
+            ScrollView([.horizontal, .vertical]) { Text("both") }
+        }
+    }
+}
+
 struct ParityGroup: View {
     var body: some View {
         VStack {
