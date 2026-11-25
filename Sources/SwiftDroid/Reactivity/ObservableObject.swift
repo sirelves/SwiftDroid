@@ -52,8 +52,11 @@ public final class Published<Value>: _PublishedBox {
             instance[keyPath: storageKeyPath]._value
         }
         set {
-            instance.objectWillChange.send(())
-            instance[keyPath: storageKeyPath]._value = newValue
+            // Transaction defers the re-render until after the write lands.
+            InvalidationQueue.shared.transaction {
+                instance.objectWillChange.send(())
+                instance[keyPath: storageKeyPath]._value = newValue
+            }
         }
     }
 

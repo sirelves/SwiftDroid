@@ -3,6 +3,7 @@ import Foundation
 /// A minimal Combine-free publisher that broadcasts values to zero or more subscribers.
 public final class PassthroughSubject<Output> {
     private var handlers: [UUID: (Output) -> Void] = [:]
+    private var observations: Set<AnyObservation> = []
     private let lock = NSLock()
 
     public init() {}
@@ -11,8 +12,17 @@ public final class PassthroughSubject<Output> {
     public func send(_ value: Output) {
         lock.lock()
         let hs = Array(handlers.values)
+        let obs = Array(observations)
         lock.unlock()
         hs.forEach { $0(value) }
+        obs.forEach { InvalidationQueue.shared.enqueue($0) }
+    }
+
+    /// Subscribes a view evaluation, deduplicated like `StateStorage`.
+    func track(_ observation: AnyObservation) {
+        lock.lock()
+        observations.insert(observation)
+        lock.unlock()
     }
 
     /// Register a handler and return a cancellable that removes it on dealloc or `cancel()`.

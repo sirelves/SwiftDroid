@@ -1,16 +1,18 @@
-/// A property wrapper that holds a reference to an `ObservableObject` and
-/// re-evaluates the enclosing view's body whenever `objectWillChange` fires.
-///
-/// Phase 1: stores the object and exposes a `Wrapper` for `$` projection.
-/// The full invalidation hook-up (subscribing to `objectWillChange` and
-/// pushing an observation onto `DependencyTracker`) is wired in Phase 2
-/// when the view evaluation loop is in place.
+/// Holds an `ObservableObject`; reading it during body evaluation subscribes the
+/// view to `objectWillChange`.
 @propertyWrapper
 public struct ObservedObject<ObjectType: ObservableObject> {
-    public var wrappedValue: ObjectType
+    private let object: ObjectType
 
     public init(wrappedValue: ObjectType) {
-        self.wrappedValue = wrappedValue
+        self.object = wrappedValue
+    }
+
+    public var wrappedValue: ObjectType {
+        if let obs = DependencyTracker.shared.current {
+            object.objectWillChange.track(obs)
+        }
+        return object
     }
 
     /// `$model.property` → `Binding`.
@@ -27,6 +29,6 @@ public struct ObservedObject<ObjectType: ObservableObject> {
     }
 
     public var projectedValue: Wrapper {
-        Wrapper(object: wrappedValue)
+        Wrapper(object: object)
     }
 }
