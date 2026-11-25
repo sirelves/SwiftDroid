@@ -19,6 +19,7 @@ public typealias Group = SwiftUI.Group
 public typealias TupleView = SwiftUI.TupleView
 public typealias ForEach = SwiftUI.ForEach
 public typealias ScrollView = SwiftUI.ScrollView
+public typealias LazyVStack = SwiftUI.LazyVStack
 
 public typealias Alignment = SwiftUI.Alignment
 public typealias HorizontalAlignment = SwiftUI.HorizontalAlignment

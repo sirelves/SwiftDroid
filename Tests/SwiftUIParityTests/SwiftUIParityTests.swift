@@ -28,6 +28,7 @@ final class SwiftUIParityTests: XCTestCase {
         assertRenders(ParityStyles())
         assertRenders(ParityLists(list: ParityTodoList()))
         assertRenders(ParityScrolling())
+        assertRenders(ParityLazyFeed())
     }
 
     #if canImport(AppKit)

@@ -190,6 +190,17 @@ struct ParityScrolling: View {
     }
 }
 
+struct ParityLazyFeed: View {
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 4) {
+                Text("Feed").font(.title)
+                ForEach(0..<500) { ParityTodoRow(todo: ParityTodo(id: $0, title: "item \($0)")) }
+            }
+        }
+    }
+}
+
 struct ParityGroup: View {
     var body: some View {
         VStack {
