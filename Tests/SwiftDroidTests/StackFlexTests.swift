@@ -49,3 +49,16 @@ final class StackFlexTests: XCTestCase {
         XCTAssertLessThan(calls, 729 * 10)  // was 531_441 before memoisation
     }
 }
+
+final class SpacerDefaultTests: XCTestCase {
+    func testDefaultMinLengthMatchesSwiftUI() {
+        XCTAssertEqual(makeNode(Spacer()).kind, .spacer(minLength: 8))
+        XCTAssertEqual(makeNode(Spacer(minLength: 0)).kind, .spacer(minLength: 0))
+    }
+
+    func testDefaultSpacerKeepsMinimumWhenSqueezed() {
+        let node = makeNode(HStack(spacing: 0) { Text("a").frame(width: 10, height: 10); Spacer(); Text("b").frame(width: 10, height: 10) })
+        let r = LayoutEngine.monospace().layout(node, proposal: ProposedSize(width: 20, height: 10))
+        XCTAssertEqual(r.children.map(\.size.width), [10, 8, 10])
+    }
+}

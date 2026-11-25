@@ -8,8 +8,9 @@
 public struct Spacer: View {
     public let minLength: Double
 
-    public init(minLength: Double = 0) {
-        self.minLength = minLength
+    /// `nil` = SwiftUI's default spacing (8, measured).
+    public init(minLength: Double? = nil) {
+        self.minLength = minLength ?? 8
     }
 
     public typealias Body = Never
