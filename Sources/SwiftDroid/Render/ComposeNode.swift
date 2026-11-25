@@ -37,6 +37,8 @@ public struct ComposeNode: Equatable {
         case heightIn(min: Double?, max: Double?)
         case fillMaxWidth
         case fillMaxHeight
+        case verticalScroll
+        case horizontalScroll
     }
 
     public let kind: Kind

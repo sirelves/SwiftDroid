@@ -24,13 +24,16 @@ public struct LayoutResult: Equatable {
     /// Resolved style for `.text` results; default elsewhere.
     public let textStyle: TextStyle
 
+    public let onScroll: ((Point) -> Void)?
+
     public init(
         kind: NodeElement.Kind,
         size: Size,
         origin: Point = .zero,
         children: [LayoutResult] = [],
         action: (() -> Void)? = nil,
-        textStyle: TextStyle = TextStyle()
+        textStyle: TextStyle = TextStyle(),
+        onScroll: ((Point) -> Void)? = nil
     ) {
         self.kind = kind
         self.size = size
@@ -38,10 +41,11 @@ public struct LayoutResult: Equatable {
         self.children = children
         self.action = action
         self.textStyle = textStyle
+        self.onScroll = onScroll
     }
 
     func moved(to origin: Point) -> LayoutResult {
-        LayoutResult(kind: kind, size: size, origin: origin, children: children, action: action, textStyle: textStyle)
+        LayoutResult(kind: kind, size: size, origin: origin, children: children, action: action, textStyle: textStyle, onScroll: onScroll)
     }
 
     public static func == (lhs: LayoutResult, rhs: LayoutResult) -> Bool {

@@ -42,6 +42,8 @@ public struct NodeElement: Equatable {
         case flexFrame(FlexFrame)
         /// Inherited text attributes for the subtree (SwiftUI environment).
         case textStyle(TextStyle)
+        /// Scrollable viewport over its single child; `offset` is the scroll position.
+        case scroll(axes: Axis.Set, offset: Point)
     }
 
     public let kind: Kind
@@ -51,10 +53,15 @@ public struct NodeElement: Equatable {
     /// are not `Equatable`, so equality is structural — see `==` below.
     public let action: (() -> Void)?
 
-    public init(kind: Kind, children: [NodeElement] = [], action: (() -> Void)? = nil) {
+    /// Scroll-position setter for `.scroll`; `nil` otherwise. Excluded from equality.
+    public let onScroll: ((Point) -> Void)?
+
+    public init(kind: Kind, children: [NodeElement] = [], action: (() -> Void)? = nil,
+                onScroll: ((Point) -> Void)? = nil) {
         self.kind = kind
         self.children = children
         self.action = action
+        self.onScroll = onScroll
     }
 
     /// Structural equality: compares `kind` and `children` only. `action` is

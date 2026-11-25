@@ -91,9 +91,30 @@ public struct LayoutEngine {
             return layout(node.children.first ?? NodeElement(kind: .empty), proposal: proposal,
                           at: path + [0], style: inner.inheriting(from: style), in: pass)
 
+        case .scroll(let axes, let offset):
+            return layoutScroll(node, axes: axes, offset: offset, proposal: proposal, at: path, style: style, in: pass)
+
         case .flexFrame(let f):
             return layoutFlexFrame(node, f, proposal: proposal, at: path, style: style, in: pass)
         }
+    }
+
+    // Measured in SwiftUI: content gets `nil` on scrolling axes; the view takes the
+    // proposed length on those axes (content's if unspecified) and the content's
+    // size on the others.
+    private func layoutScroll(_ node: NodeElement, axes: Axis.Set, offset: Point, proposal: ProposedSize,
+                              at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
+        let h = axes.contains(.horizontal), v = axes.contains(.vertical)
+        let content = layout(node.children.first ?? NodeElement(kind: .empty),
+                             proposal: ProposedSize(width: h ? nil : proposal.width, height: v ? nil : proposal.height),
+                             at: path + [0], style: style, in: pass)
+        let size = Size(width: h ? (proposal.width ?? content.size.width) : content.size.width,
+                        height: v ? (proposal.height ?? content.size.height) : content.size.height)
+        let clamped = Point(x: min(max(0, offset.x), max(0, content.size.width - size.width)),
+                            y: min(max(0, offset.y), max(0, content.size.height - size.height)))
+        return LayoutResult(kind: .scroll(axes: axes, offset: clamped), size: size,
+                            children: [content.moved(to: Point(x: -clamped.x, y: -clamped.y))],
+                            onScroll: node.onScroll)
     }
 
     private func layoutFlexFrame(_ node: NodeElement, _ f: FlexFrame, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {

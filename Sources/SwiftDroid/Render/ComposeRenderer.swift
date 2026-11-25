@@ -51,6 +51,14 @@ public struct ComposeRenderer {
             guard let child = node.children.first.flatMap({ map($0, style) }) else { return nil }
             return ComposeNode(kind: .box(alignment: alignment), modifiers: [.size(width: width, height: height)], children: [child])
 
+        case .scroll(let axes, _):
+            // Compose keeps its own scroll state; the core's offset is not needed.
+            guard let child = node.children.first.flatMap({ map($0, style) }) else { return nil }
+            let h = axes.contains(.horizontal), v = axes.contains(.vertical)
+            let kind: ComposeNode.Kind = h && v ? .box(alignment: .topLeading)
+                : h ? .row(spacing: 0, alignment: .center) : .column(spacing: 0, alignment: .center)
+            return ComposeNode(kind: kind, modifiers: (v ? [.verticalScroll] : []) + (h ? [.horizontalScroll] : []), children: [child])
+
         case .textStyle(let inner):
             return node.children.first.flatMap { map($0, inner.inheriting(from: style)) }
 
