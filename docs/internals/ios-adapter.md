@@ -28,8 +28,13 @@ Only the aliased names are in scope, so a view the core doesn't have
 the Android build.
 
 **Limit:** members of aliased types still resolve (Swift member-import
-leakage), so `Text("x").padding()` compiles via `SwiftDroidiOS` even though the
-core has no modifiers yet. The parity suite is the real guard.
+leakage), so a modifier the core lacks (e.g. `.foregroundColor`) compiles via
+`SwiftDroidiOS`. The parity suite is the real guard.
+
+Modifiers in the core: `.padding` (all four overloads) and
+`.frame(width:height:alignment:)`. The SwiftUI parity test measures them with
+`NSHostingController` and asserts the same size deltas the core's layout engine
+produces.
 
 ## Parity suite
 
@@ -53,5 +58,7 @@ Gaps the suite surfaced and the core now covers: `Group`, synthesised
   `@Published` writes run inside an `InvalidationQueue` transaction so the frame
   sees the new value; a manual `objectWillChange.send()` followed by a write to
   a plain property re-renders before the write.
+- `Group { … }.padding()` pads each child in SwiftUI; the core pads the group
+  as one block.
 - `spacing`/`minLength` are `Double` (non-optional) in the core vs `CGFloat?`
   in SwiftUI. Literals work on both; passing `nil` only works on SwiftUI.

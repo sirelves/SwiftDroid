@@ -10,7 +10,7 @@
 ///
 /// Phase 3 scope and simplifications (documented deliberately):
 /// - Only `Spacer` is flexible along a stack's main axis. Other views are
-///   measured at their natural size. Frame/flexibility modifiers arrive later.
+///   measured at their natural size (`.frame` fixes a size; no min/max/infinity yet).
 /// - `.infinity` proposals are treated as "no bounded space to distribute" — a
 ///   stack with an infinite main proposal sizes to its content. Full infinity
 ///   propagation is future work.
