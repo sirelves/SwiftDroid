@@ -76,12 +76,29 @@ Gaps the suite surfaced and the core now covers: `Group`, synthesised
 `objectWillChange` (stored in the first `@Published` box, as Combine does),
 `$model.property` → `Binding`, and `@ObservedObject` triggering re-render.
 
+## State identity and ForEach
+
+`ViewHost` owns a `StateStore`: `@State` is persisted per structural identity —
+view type, position in a `TupleView`, `if` branch, and `ForEach` element id —
+and each view's `@State` is bound to it (via `Mirror`) before its body runs.
+State not reached during a render is dropped, so a view that leaves the
+hierarchy comes back fresh. Before this, only the root view's state survived a
+re-render.
+
+`ForEach` supports `(data, id: \.keyPath)`, `Identifiable` data and
+`Range<Int>`. Row state follows the id across reorders/insertions. Rendering is
+linear (~15 µs per stateful row in release); there is no lazy container yet.
+
 ## Known semantic differences
 
 - Re-render is synchronous in the core (SwiftUI coalesces to the next frame).
   `@Published` writes run inside an `InvalidationQueue` transaction so the frame
   sees the new value; a manual `objectWillChange.send()` followed by a write to
   a plain property re-renders before the write.
+- Identity ignores container types: changing `VStack { Row() }` to
+  `HStack { Row() }` keeps `Row`'s state (SwiftUI resets it).
+- `ForEach($items) { $item in … }` (binding variant) is not supported; duplicate
+  ids share state.
 - `Group { … }.padding()` pads each child in SwiftUI; the core pads the group
   as one block.
 - `Font` sizes are iOS's default Dynamic Type values (no Dynamic Type scaling);
