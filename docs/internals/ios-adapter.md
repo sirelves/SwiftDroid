@@ -103,14 +103,40 @@ the viewport: leaves outside are culled and clipped parts can't be tapped.
 that scrolls on it, passing the rest outward, in one render. On Android the
 Compose mapping uses `verticalScroll`/`horizontalScroll` with Compose's own state.
 
+## LazyVStack
+
+Content is not evaluated up front: `_lazyRows()` returns row descriptors
+(`ForEach` one per element; tuples, `Group`, `if` unfold), each capturing its
+identity path. During layout, a `ScrollView` passes its visible window down
+and the stack builds only rows intersecting it — exactly the rows SwiftUI
+builds (pinned by `LazyCases`, re-measured live). Other rows take their last
+measured height or the mean of measured ones; the stack takes the proposed
+width. A lazy stack's position inside the scroll content is known only after
+layout, so the scroll starts from last frame's position and re-lays out if it
+moved. Offscreen rows keep their `@State` while their id exists.
+
+Cost (release, macOS, stateful rows in a `ScrollView`, per scroll step):
+
+| Rows | `VStack` | `LazyVStack` |
+|---|---|---|
+| 1 000 | 15 ms | 1 ms |
+| 5 000 | 116 ms | 6 ms |
+| 20 000 | 428 ms | 23 ms |
+
+What remains linear is generating a descriptor per element (SwiftUI also
+walks all ids).
+
 ## Known semantic differences
 
 - Re-render is synchronous in the core (SwiftUI coalesces to the next frame).
   `@Published` writes run inside an `InvalidationQueue` transaction so the frame
   sees the new value; a manual `objectWillChange.send()` followed by a write to
   a plain property re-renders before the write.
-- No momentum, bouncing, scroll indicators or `ScrollViewReader`; layout of the
-  whole content still happens (only drawing is culled) — no lazy containers yet.
+- No momentum, bouncing, scroll indicators or `ScrollViewReader`. With a plain
+  `VStack` the whole content is laid out (only drawing is culled); use
+  `LazyVStack` for long content.
+- No `LazyHStack`, `List`, `pinnedViews`; estimated heights can make the
+  content size shift as rows get measured (SwiftUI shows the same effect).
 - Identity ignores container types: changing `VStack { Row() }` to
   `HStack { Row() }` keeps `Row`'s state (SwiftUI resets it).
 - `ForEach($items) { $item in … }` (binding variant) is not supported; duplicate
