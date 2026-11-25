@@ -65,7 +65,23 @@ public struct LayoutEngine {
             let labelNode = node.children.first ?? NodeElement(kind: .empty)
             let label = layout(labelNode, proposal: proposal)
             return LayoutResult(kind: node.kind, size: label.size, children: [label], action: node.action)
+
+        case .padding(let insets):
+            return layoutPadding(node, insets: insets, proposal: proposal)
         }
+    }
+
+    private func layoutPadding(_ node: NodeElement, insets: EdgeInsets, proposal: ProposedSize) -> LayoutResult {
+        let inner = ProposedSize(width: proposal.width.map { max(0, $0 - insets.horizontal) },
+                                 height: proposal.height.map { max(0, $0 - insets.vertical) })
+        let child = layout(node.children.first ?? NodeElement(kind: .empty), proposal: inner)
+        let placed = LayoutResult(kind: child.kind, size: child.size,
+                                  origin: Point(x: insets.leading, y: insets.top),
+                                  children: child.children, action: child.action)
+        return LayoutResult(kind: node.kind,
+                            size: Size(width: child.size.width + insets.horizontal,
+                                       height: child.size.height + insets.vertical),
+                            children: [placed])
     }
 
     // MARK: - Stack layout (VStack / HStack share this, parameterised by axis)

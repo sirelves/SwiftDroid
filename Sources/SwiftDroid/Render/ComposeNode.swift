@@ -28,18 +28,29 @@ public struct ComposeNode: Equatable {
         case spacer(minLength: Double)
     }
 
+    /// Compose `Modifier` chain, outermost first.
+    public enum Modifier: Equatable {
+        case padding(EdgeInsets)
+    }
+
     public let kind: Kind
+    public let modifiers: [Modifier]
     public let children: [ComposeNode]
     /// Tap handler for `.button`; `nil` otherwise. Excluded from equality.
     public let action: (() -> Void)?
 
-    public init(kind: Kind, children: [ComposeNode] = [], action: (() -> Void)? = nil) {
+    public init(kind: Kind, modifiers: [Modifier] = [], children: [ComposeNode] = [], action: (() -> Void)? = nil) {
         self.kind = kind
+        self.modifiers = modifiers
         self.children = children
         self.action = action
     }
 
+    func prepending(_ modifier: Modifier) -> ComposeNode {
+        ComposeNode(kind: kind, modifiers: [modifier] + modifiers, children: children, action: action)
+    }
+
     public static func == (lhs: ComposeNode, rhs: ComposeNode) -> Bool {
-        lhs.kind == rhs.kind && lhs.children == rhs.children
+        lhs.kind == rhs.kind && lhs.modifiers == rhs.modifiers && lhs.children == rhs.children
     }
 }

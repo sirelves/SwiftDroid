@@ -34,6 +34,8 @@ public struct NodeElement: Equatable {
         /// A tappable control. Its label is the (single) child; the tap handler
         /// lives in `NodeElement.action`.
         case button
+        /// Insets its single child.
+        case padding(EdgeInsets)
     }
 
     public let kind: Kind

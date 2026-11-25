@@ -43,6 +43,9 @@ public struct ComposeRenderer {
 
         case .zstack(let alignment):
             return ComposeNode(kind: .box(alignment: alignment), children: mapChildren(node.children))
+
+        case .padding(let insets):
+            return node.children.first.flatMap(map)?.prepending(.padding(insets))
         }
     }
 
