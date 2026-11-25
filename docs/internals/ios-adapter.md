@@ -126,6 +126,23 @@ Cost (release, macOS, stateful rows in a `ScrollView`, per scroll step):
 What remains linear is generating a descriptor per element (SwiftUI also
 walks all ids).
 
+## List and Section
+
+`List` (content, `(data, id:)`, `Identifiable` data, `Range`) is a greedy
+`ScrollView` over a `LazyVStack`, so rows are built lazily and keep state.
+`Section` (title, `header:`, `footer:`) tags its rows; loose rows form one
+section. Each row gets the style's chrome: content inset, minimum height with
+centered content, separators between rows of a section, header/footer spacing.
+
+The spacing rules are data (`ListMetrics`) for `.insetGrouped` (iOS's
+`.automatic`) and `.plain`, measured on the iOS 26.3 simulator — the List
+on macOS is a different control, so the macOS-side parity suite can't check
+them. `scripts/measure-ios-list.sh` builds `Tools/ListProbe`, runs every case
+on the simulator and prints the frames SwiftUI reports; `ListTests` asserts
+those positions. Re-run it when a new iOS changes list metrics.
+
+`Divider` is a 0.5pt hairline (measured on iOS), vertical inside an `HStack`.
+
 ## Known semantic differences
 
 - Re-render is synchronous in the core (SwiftUI coalesces to the next frame).
@@ -135,7 +152,11 @@ walks all ids).
 - No momentum, bouncing, scroll indicators or `ScrollViewReader`. With a plain
   `VStack` the whole content is laid out (only drawing is culled); use
   `LazyVStack` for long content.
-- No `LazyHStack`, `List`, `pinnedViews`; estimated heights can make the
+- `List`: no cell backgrounds or rounded section cards (the core has no fills
+  yet), no selection, swipe actions, `onDelete`/`onMove`, sticky headers in
+  `.plain`, or `.grouped`/`.sidebar` styles. Separator extents are not
+  measured (only row geometry is).
+- No `LazyHStack`, `pinnedViews`; estimated heights can make the
   content size shift as rows get measured (SwiftUI shows the same effect).
 - Identity ignores container types: changing `VStack { Row() }` to
   `HStack { Row() }` keeps `Row`'s state (SwiftUI resets it).
