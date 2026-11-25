@@ -18,16 +18,18 @@ public struct DrawCommand: Equatable {
     public let frame: Rect
     /// Present for `.button`; the tap handler to invoke when `frame` is hit.
     public let action: (() -> Void)?
+    public let style: TextStyle
 
-    public init(kind: Kind, frame: Rect, action: (() -> Void)? = nil) {
+    public init(kind: Kind, frame: Rect, action: (() -> Void)? = nil, style: TextStyle = TextStyle()) {
         self.kind = kind
         self.frame = frame
         self.action = action
+        self.style = style
     }
 
     /// Structural equality — ignores `action` (closures have no equality).
     public static func == (lhs: DrawCommand, rhs: DrawCommand) -> Bool {
-        lhs.kind == rhs.kind && lhs.frame == rhs.frame
+        lhs.kind == rhs.kind && lhs.frame == rhs.frame && lhs.style == rhs.style
     }
 }
 

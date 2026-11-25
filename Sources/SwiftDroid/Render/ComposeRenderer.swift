@@ -13,46 +13,49 @@ public struct ComposeRenderer {
     /// Map a view's node tree to its Compose representation. A tree that maps to
     /// nothing (e.g. `EmptyView`) yields an empty `Column`.
     public func render(_ node: NodeElement) -> ComposeNode {
-        map(node) ?? ComposeNode(kind: .column(spacing: 0, alignment: .center))
+        map(node, TextStyle()) ?? ComposeNode(kind: .column(spacing: 0, alignment: .center))
     }
 
-    private func map(_ node: NodeElement) -> ComposeNode? {
+    private func map(_ node: NodeElement, _ style: TextStyle) -> ComposeNode? {
         switch node.kind {
         case .empty:
             return nil
 
         case .text(let content):
-            return ComposeNode(kind: .text(content))
+            return ComposeNode(kind: .text(content), textStyle: style)
 
         case .spacer(let minLength):
             return ComposeNode(kind: .spacer(minLength: minLength))
 
         case .button:
-            return ComposeNode(kind: .button, children: mapChildren(node.children), action: node.action)
+            return ComposeNode(kind: .button, children: mapChildren(node.children, style), action: node.action)
 
         case .group:
             // A bare group has no Compose equivalent; lay it out as a zero-spacing
             // Column, mirroring the layout engine's treatment of a root group.
-            return ComposeNode(kind: .column(spacing: 0, alignment: .center), children: mapChildren(node.children))
+            return ComposeNode(kind: .column(spacing: 0, alignment: .center), children: mapChildren(node.children, style))
 
         case .vstack(let spacing, let alignment):
-            return ComposeNode(kind: .column(spacing: spacing, alignment: alignment), children: mapChildren(node.children))
+            return ComposeNode(kind: .column(spacing: spacing, alignment: alignment), children: mapChildren(node.children, style))
 
         case .hstack(let spacing, let alignment):
-            return ComposeNode(kind: .row(spacing: spacing, alignment: alignment), children: mapChildren(node.children))
+            return ComposeNode(kind: .row(spacing: spacing, alignment: alignment), children: mapChildren(node.children, style))
 
         case .zstack(let alignment):
-            return ComposeNode(kind: .box(alignment: alignment), children: mapChildren(node.children))
+            return ComposeNode(kind: .box(alignment: alignment), children: mapChildren(node.children, style))
 
         case .padding(let insets):
-            return node.children.first.flatMap(map)?.prepending(.padding(insets))
+            return node.children.first.flatMap({ map($0, style) })?.prepending(.padding(insets))
 
         case .frame(let width, let height, let alignment):
-            guard let child = node.children.first.flatMap(map) else { return nil }
+            guard let child = node.children.first.flatMap({ map($0, style) }) else { return nil }
             return ComposeNode(kind: .box(alignment: alignment), modifiers: [.size(width: width, height: height)], children: [child])
 
+        case .textStyle(let inner):
+            return node.children.first.flatMap { map($0, inner.inheriting(from: style)) }
+
         case .flexFrame(let f):
-            guard let child = node.children.first.flatMap(map) else { return nil }
+            guard let child = node.children.first.flatMap({ map($0, style) }) else { return nil }
             return ComposeNode(kind: .box(alignment: f.alignment), modifiers: flexModifiers(f), children: [child])
         }
     }
@@ -72,12 +75,12 @@ public struct ComposeRenderer {
     /// Flatten transparent `group` children in and drop `empty` ones, mapping the
     /// rest in order — so a `TupleView`'s `group` node disappears into its parent
     /// container, exactly as Compose expects.
-    private func mapChildren(_ nodes: [NodeElement]) -> [ComposeNode] {
+    private func mapChildren(_ nodes: [NodeElement], _ style: TextStyle) -> [ComposeNode] {
         nodes.flatMap { child -> [ComposeNode] in
             switch child.kind {
             case .empty: return []
-            case .group: return mapChildren(child.children)
-            default: return map(child).map { [$0] } ?? []
+            case .group: return mapChildren(child.children, style)
+            default: return map(child, style).map { [$0] } ?? []
             }
         }
     }

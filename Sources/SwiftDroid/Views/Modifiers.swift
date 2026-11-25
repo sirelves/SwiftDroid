@@ -43,7 +43,44 @@ public struct _FlexFrameView<Content: View>: View {
     }
 }
 
+public struct _TextStyleView<Content: View>: View {
+    let content: Content
+    let style: TextStyle
+
+    public typealias Body = Never
+    public var body: Never { fatalError("_TextStyleView has no body") }
+
+    // Distributed over a group's children so the stack still flattens them.
+    public func _makeNode() -> NodeElement {
+        wrap(content._makeNode())
+    }
+
+    private func wrap(_ node: NodeElement) -> NodeElement {
+        switch node.kind {
+        case .empty: return node
+        case .group: return NodeElement(kind: .group, children: node.children.map(wrap))
+        default: return NodeElement(kind: .textStyle(style), children: [node])
+        }
+    }
+}
+
 extension View {
+    public func font(_ font: Font?) -> _TextStyleView<Self> {
+        _TextStyleView(content: self, style: TextStyle(font: font))
+    }
+
+    public func fontWeight(_ weight: Font.Weight?) -> _TextStyleView<Self> {
+        _TextStyleView(content: self, style: TextStyle(weight: weight))
+    }
+
+    public func bold(_ isActive: Bool = true) -> _TextStyleView<Self> {
+        fontWeight(isActive ? .bold : nil)
+    }
+
+    public func foregroundColor(_ color: Color?) -> _TextStyleView<Self> {
+        _TextStyleView(content: self, style: TextStyle(color: color))
+    }
+
     public func frame(minWidth: Double? = nil, idealWidth: Double? = nil, maxWidth: Double? = nil,
                       minHeight: Double? = nil, idealHeight: Double? = nil, maxHeight: Double? = nil,
                       alignment: Alignment = .center) -> _FlexFrameView<Self> {

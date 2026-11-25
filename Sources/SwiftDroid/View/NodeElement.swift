@@ -40,6 +40,8 @@ public struct NodeElement: Equatable {
         case frame(width: Double?, height: Double?, alignment: Alignment)
         /// min/ideal/max frame; see `FlexFrame.resolve`.
         case flexFrame(FlexFrame)
+        /// Inherited text attributes for the subtree (SwiftUI environment).
+        case textStyle(TextStyle)
     }
 
     public let kind: Kind

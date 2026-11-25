@@ -13,35 +13,41 @@ public struct LayoutEngine {
     /// Measures a string's size for a given proposal. `proposal` dimensions may
     /// be `nil` (natural size) or finite (constrained, e.g. for wrapping).
     public typealias TextMeasurer = (_ text: String, _ proposal: ProposedSize) -> Size
+    public typealias StyledTextMeasurer = (_ text: String, _ font: Font, _ proposal: ProposedSize) -> Size
 
-    public let measureText: TextMeasurer
+    public let measureText: StyledTextMeasurer
 
-    public init(measureText: @escaping TextMeasurer) {
+    public init(measureText: @escaping StyledTextMeasurer) {
         self.measureText = measureText
+    }
+
+    /// Font-agnostic measurer (tests, previews).
+    public init(measureText: @escaping TextMeasurer) {
+        self.measureText = { text, _, proposal in measureText(text, proposal) }
     }
 
     /// Lay out `node` given a `proposal`, returning the resolved tree.
     public func layout(_ node: NodeElement, proposal: ProposedSize) -> LayoutResult {
-        layout(node, proposal: proposal, at: [], in: LayoutPass())
+        layout(node, proposal: proposal, at: [], style: TextStyle(), in: LayoutPass())
     }
 
     // Stacks measure each child several times (at 0, ∞ and its share), so a
     // subtree is memoised per (position in the tree, proposal) for one pass.
-    private func layout(_ node: NodeElement, proposal: ProposedSize, at path: [Int], in pass: LayoutPass) -> LayoutResult {
+    private func layout(_ node: NodeElement, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
         let key = LayoutPass.Key(path: path, width: proposal.width, height: proposal.height)
         if let hit = pass.cache[key] { return hit }
-        let result = compute(node, proposal: proposal, at: path, in: pass)
+        let result = compute(node, proposal: proposal, at: path, style: style, in: pass)
         pass.cache[key] = result
         return result
     }
 
-    private func compute(_ node: NodeElement, proposal: ProposedSize, at path: [Int], in pass: LayoutPass) -> LayoutResult {
+    private func compute(_ node: NodeElement, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
         switch node.kind {
         case .empty:
             return LayoutResult(kind: .empty, size: .zero)
 
         case .text(let content):
-            return LayoutResult(kind: node.kind, size: measureText(content, proposal))
+            return LayoutResult(kind: node.kind, size: measureText(content, style.resolvedFont, proposal), textStyle: style)
 
         case .spacer:
             // A spacer is only meaningful inside a stack, where the stack resolves
@@ -55,72 +61,70 @@ public struct LayoutEngine {
             // A bare group has no container semantics of its own. Treat it as a
             // zero-spacing vertical stack so it can still be laid out at the root;
             // inside real containers it is flattened before reaching here.
-            return layoutStack(node, axis: .vertical, spacing: 0, align: .center, proposal: proposal, at: path, in: pass)
+            return layoutStack(node, axis: .vertical, spacing: 0, align: .center, proposal: proposal, at: path, style: style, in: pass)
 
         case .vstack(let spacing, let alignment):
             return layoutStack(node, axis: .vertical, spacing: spacing,
-                               align: crossAlign(alignment), proposal: proposal, at: path, in: pass)
+                               align: crossAlign(alignment), proposal: proposal, at: path, style: style, in: pass)
 
         case .hstack(let spacing, let alignment):
             return layoutStack(node, axis: .horizontal, spacing: spacing,
-                               align: crossAlign(alignment), proposal: proposal, at: path, in: pass)
+                               align: crossAlign(alignment), proposal: proposal, at: path, style: style, in: pass)
 
         case .zstack(let alignment):
-            return layoutZStack(node, alignment: alignment, proposal: proposal, at: path, in: pass)
+            return layoutZStack(node, alignment: alignment, proposal: proposal, at: path, style: style, in: pass)
 
         case .button:
             // A button sizes to its label (its single child), placed at origin.
             // Padding/min hit-target sizing is a later refinement.
             let labelNode = node.children.first ?? NodeElement(kind: .empty)
-            let label = layout(labelNode, proposal: proposal, at: path + [0], in: pass)
+            let label = layout(labelNode, proposal: proposal, at: path + [0], style: style, in: pass)
             return LayoutResult(kind: node.kind, size: label.size, children: [label], action: node.action)
 
         case .padding(let insets):
-            return layoutPadding(node, insets: insets, proposal: proposal, at: path, in: pass)
+            return layoutPadding(node, insets: insets, proposal: proposal, at: path, style: style, in: pass)
 
         case .frame(let width, let height, let alignment):
-            return layoutFrame(node, width: width, height: height, alignment: alignment, proposal: proposal, at: path, in: pass)
+            return layoutFrame(node, width: width, height: height, alignment: alignment, proposal: proposal, at: path, style: style, in: pass)
+
+        case .textStyle(let inner):
+            return layout(node.children.first ?? NodeElement(kind: .empty), proposal: proposal,
+                          at: path + [0], style: inner.inheriting(from: style), in: pass)
 
         case .flexFrame(let f):
-            return layoutFlexFrame(node, f, proposal: proposal, at: path, in: pass)
+            return layoutFlexFrame(node, f, proposal: proposal, at: path, style: style, in: pass)
         }
     }
 
-    private func layoutFlexFrame(_ node: NodeElement, _ f: FlexFrame, proposal: ProposedSize, at path: [Int], in pass: LayoutPass) -> LayoutResult {
+    private func layoutFlexFrame(_ node: NodeElement, _ f: FlexFrame, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
         let childProposal = ProposedSize(
             width: FlexFrame.childProposal(proposal.width, min: f.minWidth, ideal: f.idealWidth, max: f.maxWidth),
             height: FlexFrame.childProposal(proposal.height, min: f.minHeight, ideal: f.idealHeight, max: f.maxHeight))
-        let child = layout(node.children.first ?? NodeElement(kind: .empty), proposal: childProposal, at: path + [0], in: pass)
+        let child = layout(node.children.first ?? NodeElement(kind: .empty), proposal: childProposal, at: path + [0], style: style, in: pass)
         let size = Size(
             width: FlexFrame.resolve(proposal.width, child: child.size.width, min: f.minWidth, ideal: f.idealWidth, max: f.maxWidth),
             height: FlexFrame.resolve(proposal.height, child: child.size.height, min: f.minHeight, ideal: f.idealHeight, max: f.maxHeight))
-        let placed = LayoutResult(kind: child.kind, size: child.size,
-                                  origin: Point(x: offset(child: child.size.width, within: size.width, align: f.alignment.horizontal),
-                                                y: offset(child: child.size.height, within: size.height, align: f.alignment.vertical)),
-                                  children: child.children, action: child.action)
+        let placed = child.moved(to: Point(x: offset(child: child.size.width, within: size.width, align: f.alignment.horizontal),
+                                                y: offset(child: child.size.height, within: size.height, align: f.alignment.vertical)))
         return LayoutResult(kind: node.kind, size: size, children: [placed])
     }
 
     private func layoutFrame(_ node: NodeElement, width: Double?, height: Double?,
-                             alignment: Alignment, proposal: ProposedSize, at path: [Int], in pass: LayoutPass) -> LayoutResult {
+                             alignment: Alignment, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
         let child = layout(node.children.first ?? NodeElement(kind: .empty),
                            proposal: ProposedSize(width: width ?? proposal.width, height: height ?? proposal.height),
-                           at: path + [0], in: pass)
+                           at: path + [0], style: style, in: pass)
         let size = Size(width: width ?? child.size.width, height: height ?? child.size.height)
-        let placed = LayoutResult(kind: child.kind, size: child.size,
-                                  origin: Point(x: offset(child: child.size.width, within: size.width, align: alignment.horizontal),
-                                                y: offset(child: child.size.height, within: size.height, align: alignment.vertical)),
-                                  children: child.children, action: child.action)
+        let placed = child.moved(to: Point(x: offset(child: child.size.width, within: size.width, align: alignment.horizontal),
+                                                y: offset(child: child.size.height, within: size.height, align: alignment.vertical)))
         return LayoutResult(kind: node.kind, size: size, children: [placed])
     }
 
-    private func layoutPadding(_ node: NodeElement, insets: EdgeInsets, proposal: ProposedSize, at path: [Int], in pass: LayoutPass) -> LayoutResult {
+    private func layoutPadding(_ node: NodeElement, insets: EdgeInsets, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass) -> LayoutResult {
         let inner = ProposedSize(width: proposal.width.map { max(0, $0 - insets.horizontal) },
                                  height: proposal.height.map { max(0, $0 - insets.vertical) })
-        let child = layout(node.children.first ?? NodeElement(kind: .empty), proposal: inner, at: path + [0], in: pass)
-        let placed = LayoutResult(kind: child.kind, size: child.size,
-                                  origin: Point(x: insets.leading, y: insets.top),
-                                  children: child.children, action: child.action)
+        let child = layout(node.children.first ?? NodeElement(kind: .empty), proposal: inner, at: path + [0], style: style, in: pass)
+        let placed = child.moved(to: Point(x: insets.leading, y: insets.top))
         return LayoutResult(kind: node.kind,
                             size: Size(width: child.size.width + insets.horizontal,
                                        height: child.size.height + insets.vertical),
@@ -138,7 +142,7 @@ public struct LayoutEngine {
     /// what it takes. An unspecified main proposal asks every child for its ideal.
     private func layoutStack(
         _ node: NodeElement, axis: Axis, spacing: Double,
-        align: CrossAlign, proposal: ProposedSize, at path: [Int], in pass: LayoutPass
+        align: CrossAlign, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass
     ) -> LayoutResult {
         let children = flattenedChildren(of: node)
         let crossProp = crossOf(proposal, axis)
@@ -150,7 +154,7 @@ public struct LayoutEngine {
                 let length = main.map { max(minLength, $0) } ?? minLength
                 return LayoutResult(kind: child.kind, size: makeSize(main: length, cross: 0, axis: axis))
             }
-            return layout(child, proposal: makeProposal(main: main, cross: crossProp, axis: axis), at: path + [i], in: pass)
+            return layout(child, proposal: makeProposal(main: main, cross: crossProp, axis: axis), at: path + [i], style: style, in: pass)
         }
 
         var resolved = [LayoutResult?](repeating: nil, count: children.count)
@@ -182,7 +186,7 @@ public struct LayoutEngine {
         for r in results {
             let crossPos = crossOffset(child: crossOf(r.size, axis), within: stackCross, align: align)
             let origin = makePoint(main: cursor, cross: crossPos, axis: axis)
-            placed.append(LayoutResult(kind: r.kind, size: r.size, origin: origin, children: r.children, action: r.action))
+            placed.append(r.moved(to: origin))
             cursor += mainOf(r.size, axis) + spacing
         }
 
@@ -196,10 +200,10 @@ public struct LayoutEngine {
     // MARK: - ZStack layout
 
     private func layoutZStack(
-        _ node: NodeElement, alignment: Alignment, proposal: ProposedSize, at path: [Int], in pass: LayoutPass
+        _ node: NodeElement, alignment: Alignment, proposal: ProposedSize, at path: [Int], style: TextStyle, in pass: LayoutPass
     ) -> LayoutResult {
         let children = flattenedChildren(of: node)
-        let measured = children.enumerated().map { layout($1, proposal: proposal, at: path + [$0], in: pass) }
+        let measured = children.enumerated().map { layout($1, proposal: proposal, at: path + [$0], style: style, in: pass) }
 
         let width = measured.map { $0.size.width }.max() ?? 0
         let height = measured.map { $0.size.height }.max() ?? 0
@@ -207,7 +211,7 @@ public struct LayoutEngine {
         let placed = measured.map { r -> LayoutResult in
             let x = offset(child: r.size.width, within: width, align: alignment.horizontal)
             let y = offset(child: r.size.height, within: height, align: alignment.vertical)
-            return LayoutResult(kind: r.kind, size: r.size, origin: Point(x: x, y: y), children: r.children, action: r.action)
+            return r.moved(to: Point(x: x, y: y))
         }
 
         return LayoutResult(kind: node.kind, size: Size(width: width, height: height), children: placed)
@@ -312,14 +316,13 @@ final class LayoutPass {
 extension LayoutEngine {
     /// A deterministic single-line text measurer for tests and previews: every
     /// character is `charWidth` wide and non-empty text is one `lineHeight`-tall
-    /// line. No wrapping — proposals are ignored. Real platforms inject a
+    /// line, scaled by font size relative to `.body`. No wrapping — proposals are ignored. Real platforms inject a
     /// measurer backed by actual font metrics instead.
     public static func monospace(charWidth: Double = 10, lineHeight: Double = 20) -> LayoutEngine {
-        LayoutEngine { text, _ in
-            Size(
-                width: Double(text.count) * charWidth,
-                height: text.isEmpty ? 0 : lineHeight
-            )
+        LayoutEngine { text, font, _ in
+            let scale = font.size / Font.body.size
+            return Size(width: Double(text.count) * charWidth * scale,
+                        height: text.isEmpty ? 0 : lineHeight * scale)
         }
     }
 }

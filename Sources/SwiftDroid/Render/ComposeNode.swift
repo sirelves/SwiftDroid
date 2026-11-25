@@ -42,10 +42,14 @@ public struct ComposeNode: Equatable {
     public let kind: Kind
     public let modifiers: [Modifier]
     public let children: [ComposeNode]
+    /// Resolved style for `.text` (Compose `Text(fontSize, fontWeight, color)`).
+    public let textStyle: TextStyle
     /// Tap handler for `.button`; `nil` otherwise. Excluded from equality.
     public let action: (() -> Void)?
 
-    public init(kind: Kind, modifiers: [Modifier] = [], children: [ComposeNode] = [], action: (() -> Void)? = nil) {
+    public init(kind: Kind, modifiers: [Modifier] = [], children: [ComposeNode] = [],
+                action: (() -> Void)? = nil, textStyle: TextStyle = TextStyle()) {
+        self.textStyle = textStyle
         self.kind = kind
         self.modifiers = modifiers
         self.children = children
@@ -53,10 +57,11 @@ public struct ComposeNode: Equatable {
     }
 
     func prepending(_ modifier: Modifier) -> ComposeNode {
-        ComposeNode(kind: kind, modifiers: [modifier] + modifiers, children: children, action: action)
+        ComposeNode(kind: kind, modifiers: [modifier] + modifiers, children: children, action: action, textStyle: textStyle)
     }
 
     public static func == (lhs: ComposeNode, rhs: ComposeNode) -> Bool {
         lhs.kind == rhs.kind && lhs.modifiers == rhs.modifiers && lhs.children == rhs.children
+            && lhs.textStyle == rhs.textStyle
     }
 }

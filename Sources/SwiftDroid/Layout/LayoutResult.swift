@@ -21,18 +21,27 @@ public struct LayoutResult: Equatable {
     /// `nil` otherwise. Excluded from equality (closures have no equality).
     public let action: (() -> Void)?
 
+    /// Resolved style for `.text` results; default elsewhere.
+    public let textStyle: TextStyle
+
     public init(
         kind: NodeElement.Kind,
         size: Size,
         origin: Point = .zero,
         children: [LayoutResult] = [],
-        action: (() -> Void)? = nil
+        action: (() -> Void)? = nil,
+        textStyle: TextStyle = TextStyle()
     ) {
         self.kind = kind
         self.size = size
         self.origin = origin
         self.children = children
         self.action = action
+        self.textStyle = textStyle
+    }
+
+    func moved(to origin: Point) -> LayoutResult {
+        LayoutResult(kind: kind, size: size, origin: origin, children: children, action: action, textStyle: textStyle)
     }
 
     public static func == (lhs: LayoutResult, rhs: LayoutResult) -> Bool {
@@ -40,5 +49,6 @@ public struct LayoutResult: Equatable {
             && lhs.size == rhs.size
             && lhs.origin == rhs.origin
             && lhs.children == rhs.children
+            && lhs.textStyle == rhs.textStyle
     }
 }

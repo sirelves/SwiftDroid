@@ -34,7 +34,8 @@ public enum AndroidRenderer {
         case .spacer(let m):                   label = "Spacer(min: \(m))"
         }
         let mods = node.modifiers.isEmpty ? "" : "  .\(node.modifiers.map { "\($0)" }.joined(separator: "."))"
-        out += "\(pad)\(label)\(mods)\n"
+        let style = node.textStyle == TextStyle() ? "" : "  \(node.textStyle)"
+        out += "\(pad)\(label)\(mods)\(style)\n"
         for child in node.children { describe(child, indent: indent + 1, into: &out) }
     }
 }
