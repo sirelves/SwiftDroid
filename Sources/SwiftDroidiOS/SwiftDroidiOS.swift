@@ -17,6 +17,7 @@ public typealias HStack = SwiftUI.HStack
 public typealias ZStack = SwiftUI.ZStack
 public typealias Group = SwiftUI.Group
 public typealias TupleView = SwiftUI.TupleView
+public typealias ForEach = SwiftUI.ForEach
 
 public typealias Alignment = SwiftUI.Alignment
 public typealias HorizontalAlignment = SwiftUI.HorizontalAlignment

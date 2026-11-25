@@ -96,6 +96,14 @@ final class SwiftDroidParityTests: XCTestCase {
         XCTAssertEqual(styles.count, 10)
     }
 
+    func testListRowStateFollowsIdentity() {
+        let h = host(ParityLists(list: ParityTodoList()))
+        XCTAssertEqual(texts(h.commands), ["○ milk", "○ eggs", "a", "b", "#0", "#1", "reverse"])
+        tapButton(1, in: h.commands, h.tap)  // check "eggs"
+        tapButton(2, in: h.commands, h.tap)  // reverse
+        XCTAssertEqual(Array(texts(h.commands).prefix(2)), ["✓ eggs", "○ milk"])
+    }
+
     func testGroupFlattensElevenChildren() {
         XCTAssertEqual(compose(ParityGroup()).children.count, 11)
     }

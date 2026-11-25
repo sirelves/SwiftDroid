@@ -141,6 +141,38 @@ struct ParityStyles: View {
     }
 }
 
+struct ParityTodo: Identifiable {
+    let id: Int
+    var title: String
+}
+
+final class ParityTodoList: ObservableObject {
+    @Published var todos = [ParityTodo(id: 1, title: "milk"), ParityTodo(id: 2, title: "eggs")]
+}
+
+struct ParityTodoRow: View {
+    let todo: ParityTodo
+    @State var done = false
+
+    var body: some View {
+        Button("\(done ? "✓" : "○") \(todo.title)") { done.toggle() }
+    }
+}
+
+struct ParityLists: View {
+    @ObservedObject var list: ParityTodoList
+    let tags = ["a", "b"]
+
+    var body: some View {
+        VStack {
+            ForEach(list.todos) { ParityTodoRow(todo: $0) }
+            ForEach(tags, id: \.self) { Text($0) }
+            ForEach(0..<2) { Text("#\($0)") }
+            Button("reverse") { list.todos.reverse() }
+        }
+    }
+}
+
 struct ParityGroup: View {
     var body: some View {
         VStack {
